@@ -35,8 +35,7 @@ public class RagChatSessionService {
     private final RagChatMessageRepository messageRepository;
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final KnowledgeBaseQueryService queryService;
-    private final RagChatMapper ragChatMapper;
-    private final KnowledgeBaseMapper knowledgeBaseMapper;
+
 
     /**
      * 创建新会话
@@ -62,17 +61,14 @@ public class RagChatSessionService {
 
         log.info("创建 RAG 聊天会话: id={}, title={}", session.getId(), session.getTitle());
 
-        return ragChatMapper.toSessionDTO(session);
+        return null;
     }
 
     /**
      * 获取会话列表
      */
     public List<SessionListItemDTO> listSessions() {
-        return sessionRepository.findAllOrderByPinnedAndUpdatedAtDesc()
-            .stream()
-            .map(ragChatMapper::toSessionListItemDTO)
-            .toList();
+        return null;
     }
 
     /**
@@ -81,20 +77,7 @@ public class RagChatSessionService {
      */
     public SessionDetailDTO getSessionDetail(Long sessionId) {
         // 先加载会话和知识库
-        RagChatSessionEntity session = sessionRepository
-            .findByIdWithKnowledgeBases(sessionId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "会话不存在"));
-
-        // 再单独加载消息（避免笛卡尔积）
-        List<RagChatMessageEntity> messages = messageRepository
-            .findBySessionIdOrderByMessageOrderAsc(sessionId);
-
-        // 转换知识库列表
-        List<KnowledgeBaseListItemDTO> kbDTOs = knowledgeBaseMapper.toListItemDTOList(
-            new java.util.ArrayList<>(session.getKnowledgeBases())
-        );
-
-        return ragChatMapper.toSessionDetailDTO(session, messages, kbDTOs);
+        return null;
     }
 
     /**

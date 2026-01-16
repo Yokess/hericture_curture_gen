@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,24 +30,20 @@ public class KnowledgeBaseListService {
 
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final RagChatMessageRepository ragChatMessageRepository;
-    private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final FileStorageService fileStorageService;
 
     /**
      * 获取所有知识库列表
      */
     public List<KnowledgeBaseListItemDTO> listKnowledgeBases() {
-        return knowledgeBaseMapper.toListItemDTOList(
-            knowledgeBaseRepository.findAllByOrderByUploadedAtDesc()
-        );
+        return Collections.emptyList();
     }
 
     /**
      * 根据ID获取知识库详情
      */
     public Optional<KnowledgeBaseListItemDTO> getKnowledgeBase(Long id) {
-        return knowledgeBaseRepository.findById(id)
-            .map(knowledgeBaseMapper::toListItemDTO);
+        return null;
     }
 
     /**
@@ -86,7 +83,8 @@ public class KnowledgeBaseListService {
         } else {
             entities = knowledgeBaseRepository.findByCategoryOrderByUploadedAtDesc(category);
         }
-        return knowledgeBaseMapper.toListItemDTOList(entities);
+        return Collections.emptyList();
+
     }
 
     /**
@@ -110,9 +108,7 @@ public class KnowledgeBaseListService {
         if (keyword == null || keyword.isBlank()) {
             return listKnowledgeBases();
         }
-        return knowledgeBaseMapper.toListItemDTOList(
-            knowledgeBaseRepository.searchByKeyword(keyword.trim())
-        );
+        return listKnowledgeBases();
     }
 
     // ========== 排序功能 ==========
@@ -128,7 +124,7 @@ public class KnowledgeBaseListService {
             case "question" -> entities = knowledgeBaseRepository.findAllByOrderByQuestionCountDesc();
             default -> entities = knowledgeBaseRepository.findAllByOrderByUploadedAtDesc();
         }
-        return knowledgeBaseMapper.toListItemDTOList(entities);
+        return Collections.emptyList();
     }
 
     // ========== 统计功能 ==========
