@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创意分享社区 - 非遗文化智能创意生成平台</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        heritage: {
+                            brown: '#8B4513',
+                            gold: '#D4AF37',
+                            beige: '#F5F5DC',
+                            darkbrown: '#2C1810',
+                            red: '#C41E3A',
+                        }
+                    },
+                    fontFamily: {
+                        'serif-sc': ['"Noto Serif SC"', 'serif'],
+                        'sans-sc': ['"Noto Sans SC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(139, 69, 19, 0.15);
+        }
+    </style>
+</head>
+
+<body class="bg-heritage-beige">
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-4 left-4 right-4 z-50">
+        <div
+            class="max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-heritage-gold/20">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <span class="font-serif-sc text-xl font-bold text-heritage-brown">非遗文化平台</span>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="index.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">首页</a>
+                        <a href="projects.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">非遗项目</a>
+                        <a href="ai-design.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">AI设计</a>
+                        <a href="video-archive.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">视频档案</a>
+                        <a href="community.html"
+                            class="font-sans-sc text-heritage-brown font-medium hover:text-heritage-gold transition-colors duration-200 cursor-pointer">创意社区</a>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <button
+                            class="hidden sm:block px-4 py-2 text-heritage-brown hover:bg-heritage-beige rounded-lg transition-colors duration-200 cursor-pointer font-sans-sc">
+                            登录
+                        </button>
+                        <button
+                            class="px-5 py-2 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer font-sans-sc font-medium">
+                            发布作品
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-32 pb-8 px-4">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="font-serif-sc text-5xl font-bold text-heritage-brown mb-4">创意分享社区</h1>
+            <p class="font-sans-sc text-xl text-gray-600">发现非遗文创灵感,分享创意设计</p>
+        </div>
+    </section>
+
+    <!-- 筛选和排序 -->
+    <section class="pb-8 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button
+                        class="px-4 py-2 bg-heritage-brown text-white rounded-lg cursor-pointer font-sans-sc">全部</button>
+                    <button
+                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-heritage-beige transition-colors duration-200 cursor-pointer font-sans-sc">剪纸</button>
+                    <button
+                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-heritage-beige transition-colors duration-200 cursor-pointer font-sans-sc">青花瓷</button>
+                    <button
+                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-heritage-beige transition-colors duration-200 cursor-pointer font-sans-sc">苗族</button>
+                    <button
+                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-heritage-beige transition-colors duration-200 cursor-pointer font-sans-sc">台灯</button>
+                </div>
+                <select
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-heritage-gold font-sans-sc cursor-pointer">
+                    <option>最新发布</option>
+                    <option>最多点赞</option>
+                    <option>最多浏览</option>
+                    <option>最多评论</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- 作品瀑布流 -->
+    <section class="pb-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- 作品卡片 1 - 置顶 -->
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-heritage-gold card-hover cursor-pointer">
+                    <div class="relative">
+                        <div
+                            class="aspect-[4/3] bg-gradient-to-br from-heritage-beige to-heritage-gold/20 flex items-center justify-center">
+                            <div class="text-center">
+                                <div
+                                    class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                        fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                                        <circle cx="9" cy="9" r="2" />
+                                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                    </svg>
+                                </div>
+                                <p class="font-sans-sc text-heritage-brown">蔚县剪纸艺术台灯</p>
+                            </div>
+                        </div>
+                        <div
+                            class="absolute top-3 right-3 px-3 py-1 bg-heritage-red text-white rounded-full text-sm font-sans-sc">
+                            置顶
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">我的第一个非遗文创设计 - 剪纸台灯</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            一直很喜欢蔚县剪纸的艺术,这次尝试将它与现代家居结合,设计了这款台灯。希望大家喜欢!
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">剪纸</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">台灯</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">现代中式</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    非
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">非遗守护者</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">89</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">1.5k</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 作品卡片 2 -->
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border border-heritage-gold/10 card-hover cursor-pointer">
+                    <div
+                        class="aspect-[4/3] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                    fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                            <p class="font-sans-sc text-heritage-brown">青花瓷韵手机保护壳</p>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">青花瓷手机壳设计分享</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            青花瓷的美在于它的简约与优雅,这次设计尝试用最简单的线条表达最深的韵味。
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">青花瓷</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">手机壳</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">文创产品</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    王
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">王设计师</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">156</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">2.3k</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 作品卡片 3 -->
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border border-heritage-gold/10 card-hover cursor-pointer">
+                    <div
+                        class="aspect-[4/3] bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                    fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                            <p class="font-sans-sc text-heritage-brown">苗族银饰风格耳环</p>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">苗族银饰风格耳环 - 传统与时尚的碰撞</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            苗族银饰的工艺真的太精湛了!这次设计保留了传统的镂空技法,但在造型上做了现代化处理。
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">苗族</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">银饰</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">耳环</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    非
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">非遗守护者</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">67</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">987</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 更多作品卡片... -->
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border border-heritage-gold/10 card-hover cursor-pointer">
+                    <div
+                        class="aspect-[4/3] bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                    fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                            <p class="font-sans-sc text-heritage-brown">景泰蓝纹样笔记本</p>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">景泰蓝纹样笔记本设计</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            将景泰蓝的华丽纹样应用到笔记本封面,既实用又美观。
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">景泰蓝</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">文具</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    文
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">文化探索者</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">42</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">654</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border border-heritage-gold/10 card-hover cursor-pointer">
+                    <div
+                        class="aspect-[4/3] bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                    fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                            <p class="font-sans-sc text-heritage-brown">扎染图案帆布包</p>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">扎染图案帆布包</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            传统扎染工艺与现代帆布包的完美结合,每一个都是独一无二的艺术品。
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">扎染</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">帆布包</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    王
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">王设计师</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">78</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">1.1k</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white rounded-2xl overflow-hidden shadow-lg border border-heritage-gold/10 card-hover cursor-pointer">
+                    <div class="aspect-[4/3] bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                                    fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                            </div>
+                            <p class="font-sans-sc text-heritage-brown">京剧脸谱冰箱贴</p>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-serif-sc text-lg font-bold text-heritage-brown mb-2">京剧脸谱冰箱贴系列</h3>
+                        <p class="font-sans-sc text-gray-600 text-sm mb-3 line-clamp-2">
+                            将京剧脸谱的艺术魅力融入日常生活,让传统文化走进千家万户。
+                        </p>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">京剧</span>
+                            <span
+                                class="px-2 py-1 bg-heritage-beige text-heritage-brown text-xs rounded-full font-sans-sc">冰箱贴</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-sm font-serif-sc">
+                                    文
+                                </div>
+                                <span class="font-sans-sc text-sm text-gray-700">文化探索者</span>
+                            </div>
+                            <div class="flex items-center space-x-4 text-gray-500">
+                                <div
+                                    class="flex items-center space-x-1 cursor-pointer hover:text-heritage-red transition-colors duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">93</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <span class="text-sm font-sans-sc">1.4k</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 加载更多 -->
+            <div class="mt-12 text-center">
+                <button
+                    class="px-8 py-3 border-2 border-heritage-brown text-heritage-brown rounded-xl font-sans-sc font-medium hover:bg-heritage-brown hover:text-white transition-all duration-200 cursor-pointer">
+                    加载更多作品
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-heritage-darkbrown text-white py-12 px-4">
+        <div class="max-w-7xl mx-auto text-center font-sans-sc text-white/50">
+            <p>&copy; 2026 非遗文化智能创意生成平台. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

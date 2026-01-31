@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 文创设计工作站 - 非遗文化智能创意生成平台</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        heritage: {
+                            brown: '#8B4513',
+                            gold: '#D4AF37',
+                            beige: '#F5F5DC',
+                            darkbrown: '#2C1810',
+                            red: '#C41E3A',
+                        }
+                    },
+                    fontFamily: {
+                        'serif-sc': ['"Noto Serif SC"', 'serif'],
+                        'sans-sc': ['"Noto Sans SC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-heritage-beige">
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-4 left-4 right-4 z-50">
+        <div
+            class="max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-heritage-gold/20">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <span class="font-serif-sc text-xl font-bold text-heritage-brown">非遗文化平台</span>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="index.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">首页</a>
+                        <a href="projects.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">非遗项目</a>
+                        <a href="ai-design.html"
+                            class="font-sans-sc text-heritage-brown font-medium hover:text-heritage-gold transition-colors duration-200 cursor-pointer">AI设计</a>
+                        <a href="video-archive.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">视频档案</a>
+                        <a href="community.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">创意社区</a>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <button
+                            class="hidden sm:block px-4 py-2 text-heritage-brown hover:bg-heritage-beige rounded-lg transition-colors duration-200 cursor-pointer font-sans-sc">
+                            登录
+                        </button>
+                        <button
+                            class="px-5 py-2 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer font-sans-sc font-medium">
+                            我的作品
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <section class="pt-32 pb-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="font-serif-sc text-5xl font-bold text-heritage-brown mb-4">AI 文创设计工作站</h1>
+                <p class="font-sans-sc text-xl text-gray-600">让 AI 总设计师帮您创作非遗文创产品</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 左侧:对话引导区 -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl p-6 shadow-lg border border-heritage-gold/10 sticky top-24">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div
+                                class="w-12 h-12 bg-gradient-to-br from-heritage-red to-heritage-gold rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M12 8V4H8" />
+                                    <rect width="16" height="12" x="4" y="8" rx="2" />
+                                    <path d="M2 14h2" />
+                                    <path d="M20 14h2" />
+                                    <path d="M15 13v2" />
+                                    <path d="M9 13v2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="font-serif-sc text-xl font-bold text-heritage-brown">AI 总设计师</h2>
+                                <p class="text-sm text-gray-500 font-sans-sc">在线</p>
+                            </div>
+                        </div>
+
+                        <!-- 对话历史 -->
+                        <div class="space-y-4 mb-6 max-h-96 overflow-y-auto">
+                            <div class="bg-heritage-beige rounded-lg p-4">
+                                <p class="font-sans-sc text-gray-700">您好!我是 AI 总设计师,我将帮助您创作非遗文创产品。请告诉我:</p>
+                                <ul class="mt-2 space-y-1 font-sans-sc text-gray-700 text-sm">
+                                    <li>• 您想基于哪个非遗项目?</li>
+                                    <li>• 设计什么类型的产品?</li>
+                                    <li>• 期望的风格是什么?</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-blue-50 rounded-lg p-4 ml-8">
+                                <p class="font-sans-sc text-gray-700">我想设计一款基于蔚县剪纸的台灯</p>
+                            </div>
+
+                            <div class="bg-heritage-beige rounded-lg p-4">
+                                <p class="font-sans-sc text-gray-700">很好的选择!蔚县剪纸的镂空艺术非常适合台灯设计。让我为您确认几个细节:</p>
+                                <ul class="mt-2 space-y-1 font-sans-sc text-gray-700 text-sm">
+                                    <li>• 材质:建议使用半透明材质+实木底座</li>
+                                    <li>• 风格:现代中式</li>
+                                    <li>• 尺寸:桌面台灯(高度约30-40cm)</li>
+                                </ul>
+                                <p class="mt-2 font-sans-sc text-gray-700">是否开始生成设计方案?</p>
+                            </div>
+                        </div>
+
+                        <!-- 输入框 -->
+                        <div class="relative">
+                            <input type="text" placeholder="输入您的想法..."
+                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:border-heritage-gold font-sans-sc">
+                            <button
+                                class="absolute right-2 top-2 p-2 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="m22 2-7 20-4-9-9-4Z" />
+                                    <path d="M22 2 11 13" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <button
+                            class="w-full mt-4 px-6 py-3 bg-gradient-to-r from-heritage-red to-heritage-gold text-white rounded-xl font-sans-sc font-semibold hover:shadow-lg transition-all duration-200 cursor-pointer">
+                            生成设计方案
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 右侧:设计方案展示 -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-heritage-gold/10">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="font-serif-sc text-2xl font-bold text-heritage-brown">设计方案</h2>
+                            <div class="flex items-center space-x-2">
+                                <button
+                                    class="px-4 py-2 border border-heritage-brown text-heritage-brown rounded-lg hover:bg-heritage-beige transition-colors duration-200 cursor-pointer font-sans-sc">
+                                    重新生成
+                                </button>
+                                <button
+                                    class="px-4 py-2 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer font-sans-sc">
+                                    导出 PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 设计图展示 -->
+                        <div class="mb-8">
+                            <div class="grid grid-cols-3 gap-4 mb-4">
+                                <div
+                                    class="aspect-square bg-gradient-to-br from-heritage-beige to-heritage-gold/20 rounded-xl flex items-center justify-center border-2 border-heritage-gold cursor-pointer">
+                                    <div class="text-center">
+                                        <div
+                                            class="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                                viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                <circle cx="9" cy="9" r="2" />
+                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm font-sans-sc text-heritage-brown">设计草图 1</p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="aspect-square bg-gradient-to-br from-heritage-beige to-heritage-gold/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-2 hover:border-heritage-gold transition-all duration-200">
+                                    <div class="text-center">
+                                        <div
+                                            class="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                                viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                <circle cx="9" cy="9" r="2" />
+                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm font-sans-sc text-heritage-brown">设计草图 2</p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="aspect-square bg-gradient-to-br from-heritage-beige to-heritage-gold/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-2 hover:border-heritage-gold transition-all duration-200">
+                                    <div class="text-center">
+                                        <div
+                                            class="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                                viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                <circle cx="9" cy="9" r="2" />
+                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm font-sans-sc text-heritage-brown">设计草图 3</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 主图展示 -->
+                            <div
+                                class="aspect-video bg-gradient-to-br from-heritage-beige to-heritage-gold/20 rounded-2xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div
+                                        class="w-24 h-24 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+                                            viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                                            <circle cx="9" cy="9" r="2" />
+                                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                        </svg>
+                                    </div>
+                                    <p class="font-serif-sc text-xl text-heritage-brown">蔚县剪纸艺术台灯 - 主视图</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 设计说明 -->
+                        <div class="mb-6">
+                            <h3 class="font-serif-sc text-xl font-bold text-heritage-brown mb-3">设计说明</h3>
+                            <div class="bg-heritage-beige rounded-xl p-6">
+                                <h4 class="font-sans-sc font-semibold text-heritage-brown mb-2">蔚县剪纸艺术台灯</h4>
+                                <p class="font-sans-sc text-gray-700 leading-relaxed mb-4">
+                                    本设计将蔚县剪纸的传统图案与现代照明功能相结合。灯罩采用半透明材质,内部镂刻剪纸纹样,通电后光影交错,营造出温馨的氛围。底座采用实木材质,体现自然质朴的美感。
+                                </p>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p class="font-sans-sc font-semibold text-heritage-brown mb-1">设计寓意</p>
+                                        <p class="font-sans-sc text-gray-600">传统文化照亮现代生活</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-sans-sc font-semibold text-heritage-brown mb-1">建议材质</p>
+                                        <p class="font-sans-sc text-gray-600">半透明亚克力 + 实木</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-sans-sc font-semibold text-heritage-brown mb-1">生成模型</p>
+                                        <p class="font-sans-sc text-gray-600">Hunyuan-DiT</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-sans-sc font-semibold text-heritage-brown mb-1">生成时间</p>
+                                        <p class="font-sans-sc text-gray-600">5.4 秒</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="flex items-center justify-between">
+                            <button
+                                class="px-6 py-3 border-2 border-heritage-brown text-heritage-brown rounded-xl font-sans-sc font-medium hover:bg-heritage-brown hover:text-white transition-all duration-200 cursor-pointer">
+                                保存草稿
+                            </button>
+                            <button
+                                class="px-6 py-3 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-xl font-sans-sc font-semibold hover:shadow-lg transition-all duration-200 cursor-pointer">
+                                发布到社区
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-heritage-darkbrown text-white py-12 px-4">
+        <div class="max-w-7xl mx-auto text-center font-sans-sc text-white/50">
+            <p>&copy; 2026 非遗文化智能创意生成平台. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

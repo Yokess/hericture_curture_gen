@@ -1,50 +1,306 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
 
-/* 自定义主题 */
+/* 非遗文化专用设计系统 (Heritage Culture Design System) */
 @theme {
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
-  
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 
-    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, 
+  /* 中国传统色板 - 基于 HTML 原型 */
+  --color-heritage-brown: #8B4513;
+  /* 赭石棕 - 主色调 */
+  --color-heritage-gold: #D4AF37;
+  /* 金色 - 辅助色 */
+  --color-heritage-red: #C41E3A;
+  /* 中国红 - 强调色 */
+  --color-heritage-beige: #F5F5DC;
+  /* 米白 - 背景色 */
+  --color-heritage-darkbrown: #2C1810;
+  /* 深棕 - 深色背景 */
+
+  /* 映射到传统变量(向后兼容) */
+  --color-zhusha: #C41E3A;
+  /* 朱砂红 -> 中国红 */
+  --color-dailan: #4169e1;
+  /* 黛蓝 */
+  --color-xuanzhi: #F5F5DC;
+  /* 宣纸白 -> 米白 */
+  --color-mohei: #1a1a1b;
+  /* 墨黑 */
+  --color-yuhui: #bdc3c7;
+  /* 玉灰 */
+
+  --color-primary-50: oklch(0.98 0.01 45);
+  /* 柔和米白 */
+  --color-primary-500: #8B4513;
+  /* 主题色 - 赭石棕 */
+  --color-primary-900: #2C1810;
+  /* 深褐 */
+
+  --font-sans: "Outfit", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica,
     Arial, sans-serif;
+  --font-serif: "Noto Serif SC", serif;
 }
 
-/* 自定义基础样式 */
 @layer base {
-  html, body, #root {
+
+  html,
+  body,
+  #root {
     @apply h-full m-0 p-0;
   }
-  
+
   body {
-    @apply font-sans antialiased bg-linear-to-br from-slate-50 to-indigo-50 text-slate-900;
+    /* 宣纸感背景，增加极其细微的纹理暗示（可以通过渐变或透明图片实现） */
+    @apply font-sans antialiased bg-xuanzhi text-mohei selection:bg-zhusha/20 selection:text-zhusha;
   }
-  
+
   #root {
-    @apply min-h-screen;
+    @apply min-h-screen flex flex-col;
   }
 }
 
-/* 自定义滚动条 */
+/* Digital Zen 装饰性样式 */
 @layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    @apply w-2 h-2;
+
+  /* 毛玻璃卡片 - Glassmorphism */
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg hover:shadow-xl transition-all duration-500;
   }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-slate-100 rounded;
+
+  .glass-card-hover {
+    @apply hover:bg-white/80 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zhusha/10;
   }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded hover:bg-slate-400;
+
+  /* 导航栏毛玻璃 */
+  .glass-nav {
+    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+
+  /* 渐变文字 */
+  .text-gradient-heritage {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--color-zhusha) 0%, var(--color-dailan) 100%);
+  }
+
+  /* 印章样式 */
+  .seal-stamp {
+    @apply relative inline-block p-4 border-2 border-zhusha bg-zhusha/10 text-zhusha font-serif font-bold;
+    transform: rotate(-5deg);
+    box-shadow: inset 0 0 20px rgba(174, 32, 18, 0.2);
+  }
+
+  /* 光影流动按钮 */
+  .btn-glow {
+    @apply relative overflow-hidden;
+    transition: all 0.3s ease;
+  }
+
+  .btn-glow::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+  }
+
+  .btn-glow:hover::before {
+    @apply opacity-100;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* 呼吸感动画 */
+  .breathe {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  /* 滚动触发进场动画 */
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+      transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .fade-in-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 宣纸纹理背景 */
+  .bg-paper-texture {
+    background-color: var(--color-xuanzhi);
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(174, 32, 18, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(44, 62, 80, 0.03) 0%, transparent 50%);
+  }
+
+  /* 即梦风格 - 大圆角卡片 */
+  .hero-card {
+    @apply bg-white/90 backdrop-blur-md shadow-2xl;
+    border-radius: 32px;
+  }
+
+  /* 服务卡片悬停效果 */
+  .service-card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  /* 浮动毛玻璃效果 */
+  .floating-glass {
+    @apply fixed bottom-0 left-20 right-0 bg-white/80 backdrop-blur-xl border-t border-border;
+  }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.985 0.01 45);
+  /* 米白色底 */
+  --foreground: oklch(0.15 0 0);
+  /* 接近墨色 */
+  --card: oklch(1 0 0 / 0.8);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0 / 0.95);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.45 0.12 45);
+  /* 赭石棕 */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.65 0.15 75);
+  /* 金色 */
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.92 0.02 45);
+  --muted-foreground: oklch(0.4 0.01 45);
+  --accent: oklch(0.55 0.2 25);
+  /* 中国红 */
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.25 25);
+  --border: oklch(0.15 0 0 / 0.1);
+  --input: oklch(0.15 0 0 / 0.05);
+  --ring: oklch(0.45 0.12 45 / 0.3);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.98 0.01 45);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.45 0.12 45);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.92 0.02 45);
+  --sidebar-accent-foreground: oklch(0.45 0.12 45);
+  --sidebar-border: oklch(0.15 0 0 / 0.1);
+  --sidebar-ring: oklch(0.45 0.12 45 / 0.3);
+}
+
+.dark {
+  --background: oklch(0.15 0 0);
+  /* 墨色背景 */
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.2 0 0 / 0.9);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.2 0 0 / 0.95);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.55 0.15 45);
+  /* 更亮的赭石棕 */
+  --primary-foreground: oklch(0.15 0 0);
+  --secondary: oklch(0.7 0.18 75);
+  /* 更亮的金色 */
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.6 0.22 25);
+  /* 更亮的中国红 */
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.5 0.2 25);
+  --border: oklch(1 0 0 / 0.15);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.55 0.15 45 / 0.5);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.2 0 0);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.55 0.15 45);
+  --sidebar-primary-foreground: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.3 0 0);
+  --sidebar-accent-foreground: oklch(0.55 0.15 45);
+  --sidebar-border: oklch(1 0 0 / 0.15);
+  --sidebar-ring: oklch(0.55 0.15 45 / 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground transition-colors duration-500;
   }
 }

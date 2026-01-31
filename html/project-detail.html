@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目详情 - 非遗文化智能创意生成平台</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        heritage: {
+                            brown: '#8B4513',
+                            gold: '#D4AF37',
+                            beige: '#F5F5DC',
+                            darkbrown: '#2C1810',
+                            red: '#C41E3A',
+                        }
+                    },
+                    fontFamily: {
+                        'serif-sc': ['"Noto Serif SC"', 'serif'],
+                        'sans-sc': ['"Noto Sans SC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-heritage-beige">
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-4 left-4 right-4 z-50">
+        <div
+            class="max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-heritage-gold/20">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <span class="font-serif-sc text-xl font-bold text-heritage-brown">非遗文化平台</span>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="index.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">首页</a>
+                        <a href="projects.html"
+                            class="font-sans-sc text-heritage-brown font-medium hover:text-heritage-gold transition-colors duration-200 cursor-pointer">非遗项目</a>
+                        <a href="ai-design.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">AI设计</a>
+                        <a href="video-archive.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">视频档案</a>
+                        <a href="community.html"
+                            class="font-sans-sc text-gray-600 hover:text-heritage-brown transition-colors duration-200 cursor-pointer">创意社区</a>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <button
+                            class="hidden sm:block px-4 py-2 text-heritage-brown hover:bg-heritage-beige rounded-lg transition-colors duration-200 cursor-pointer font-sans-sc">
+                            登录
+                        </button>
+                        <button
+                            class="px-5 py-2 bg-gradient-to-r from-heritage-brown to-heritage-gold text-white rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer font-sans-sc font-medium">
+                            开始创作
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 返回按钮 -->
+    <section class="pt-32 pb-8 px-4">
+        <div class="max-w-5xl mx-auto">
+            <a href="projects.html"
+                class="inline-flex items-center space-x-2 text-heritage-brown hover:text-heritage-gold transition-colors duration-200 cursor-pointer font-sans-sc">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 19-7-7 7-7" />
+                    <path d="M19 12H5" />
+                </svg>
+                <span>返回项目列表</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- 项目详情 -->
+    <section class="pb-12 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-heritage-gold/10">
+                <!-- 项目头部 -->
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span
+                                class="px-4 py-1.5 bg-heritage-beige text-heritage-brown rounded-full font-sans-sc font-medium">Ⅶ-023</span>
+                            <span class="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full font-sans-sc">传统技艺</span>
+                            <span class="text-gray-500 font-sans-sc">2006(第一批)</span>
+                        </div>
+                        <h1 class="font-serif-sc text-4xl font-bold text-heritage-brown mb-3">景德镇传统手工制瓷技艺</h1>
+                        <div class="flex items-center space-x-4 text-gray-600">
+                            <div class="flex items-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                <span class="font-sans-sc">江西省景德镇市</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M8 2v4" />
+                                    <path d="M16 2v4" />
+                                    <rect width="18" height="18" x="3" y="4" rx="2" />
+                                    <path d="M3 10h18" />
+                                </svg>
+                                <span class="font-sans-sc">2024-01-10 录入</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#"
+                        class="px-4 py-2 text-heritage-brown border border-heritage-brown rounded-lg hover:bg-heritage-brown hover:text-white transition-all duration-200 cursor-pointer font-sans-sc">
+                        官方网站
+                    </a>
+                </div>
+
+                <!-- 项目描述 -->
+                <div class="mb-8">
+                    <h2 class="font-serif-sc text-2xl font-bold text-heritage-brown mb-4">项目介绍</h2>
+                    <p class="font-sans-sc text-gray-700 leading-relaxed text-lg">
+                        景德镇制瓷技艺历史悠久,以"白如玉、明如镜、薄如纸、声如磬"著称。传统手工制瓷包括拉坯、利坯、画坯、施釉、烧窑等72道工序,每道工序都需要精湛的技艺和丰富的经验。景德镇瓷器以其精美的造型、细腻的质地和独特的艺术风格,成为中国陶瓷艺术的代表,享誉世界。
+                    </p>
+                </div>
+
+                <!-- 传承人 -->
+                <div class="mb-8">
+                    <h2 class="font-serif-sc text-2xl font-bold text-heritage-brown mb-4">代表性传承人</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-heritage-beige rounded-xl p-6">
+                            <div class="flex items-start space-x-4">
+                                <div
+                                    class="w-16 h-16 bg-gradient-to-br from-heritage-brown to-heritage-gold rounded-full flex items-center justify-center text-white text-2xl font-serif-sc">
+                                    邱
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-serif-sc text-xl font-bold text-heritage-brown mb-1">邱含</h3>
+                                    <div class="flex items-center space-x-3 text-sm text-gray-600 mb-2 font-sans-sc">
+                                        <span>女</span>
+                                        <span>•</span>
+                                        <span>1968年生</span>
+                                    </div>
+                                    <p class="font-sans-sc text-gray-700 leading-relaxed">
+                                        国家级非遗传承人,景德镇陶瓷世家第四代传人,擅长青花、粉彩等传统技艺。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 相关视频 -->
+                <div class="mb-8">
+                    <h2 class="font-serif-sc text-2xl font-bold text-heritage-brown mb-4">相关视频档案</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div
+                            class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-12 h-12 bg-white/80 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="#8B4513" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polygon points="23 7 16 12 23 17 23 7" />
+                                        <rect width="15" height="14" x="1" y="5" rx="2" ry="2" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-serif-sc font-semibold text-heritage-brown">景德镇拉坯技艺</h3>
+                                    <p class="text-sm text-gray-600 font-sans-sc">150 MB • 已解析</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-sans-sc">已完成</span>
+                                <a href="video-archive.html" class="text-heritage-gold font-sans-sc font-medium">查看详情
+                                    →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 相关作品 -->
+                <div>
+                    <h2 class="font-serif-sc text-2xl font-bold text-heritage-brown mb-4">相关文创作品</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="group cursor-pointer">
+                            <div
+                                class="relative overflow-hidden rounded-xl mb-3 aspect-square bg-gradient-to-br from-blue-50 to-blue-100">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                            viewBox="0 0 24 24" fill="none" stroke="#8B4513" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                                            <circle cx="9" cy="9" r="2" />
+                                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <h3
+                                class="font-serif-sc font-semibold text-heritage-brown group-hover:text-heritage-gold transition-colors duration-200">
+                                青花瓷韵手机保护壳
+                            </h3>
+                            <p class="text-sm text-gray-500 font-sans-sc">by 王设计师</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-heritage-darkbrown text-white py-12 px-4">
+        <div class="max-w-7xl mx-auto text-center font-sans-sc text-white/50">
+            <p>&copy; 2026 非遗文化智能创意生成平台. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>
