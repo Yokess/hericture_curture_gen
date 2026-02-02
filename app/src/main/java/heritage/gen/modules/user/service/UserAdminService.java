@@ -72,8 +72,8 @@ public class UserAdminService {
         SysUserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 设置角色：ADMIN 或 ACTIVE
-        user.setStatus(isAdmin ? "ADMIN" : "ACTIVE");
+        // 设置 isAdmin 字段
+        user.setIsAdmin(isAdmin);
         userRepository.save(user);
 
         log.info("用户角色已更新: userId={}, isAdmin={}", userId, isAdmin);

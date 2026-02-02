@@ -46,6 +46,10 @@ public class SysUserEntity {
     @Column(length = 20)
     private String status = "ACTIVE";
 
+    // 是否是管理员
+    @Column(nullable = false, name = "is_admin")
+    private Boolean isAdmin = false;
+
     // 创建时间
     @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt;
@@ -158,6 +162,14 @@ public class SysUserEntity {
         this.isDeleted = isDeleted;
     }
 
+    public Boolean getIsAdmin() {
+        return isAdmin;
+    }
+
+    public void setIsAdmin(Boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+
     /**
      * 检查用户是否被封禁
      */
@@ -169,6 +181,13 @@ public class SysUserEntity {
      * 检查用户是否是管理员
      */
     public boolean isAdmin() {
-        return "ADMIN".equals(this.status);
+        return Boolean.TRUE.equals(this.isAdmin);
+    }
+
+    /**
+     * 检查用户是否启用（未被封禁）
+     */
+    public boolean isEnabled() {
+        return "ACTIVE".equals(this.status);
     }
 }

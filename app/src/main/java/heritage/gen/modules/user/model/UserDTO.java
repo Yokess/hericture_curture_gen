@@ -9,11 +9,13 @@ public record UserDTO(
         Long id,
         String username,
         String nickname,
-        String avatarUrl,
         String email,
         String phone,
+        String avatarUrl,
         String status,
-        LocalDateTime createdAt) {
+        String createdAt, // Changed type to String
+        Boolean isAdmin // Added isAdmin field
+) {
     /**
      * 从实体转换为 DTO
      */
@@ -22,10 +24,12 @@ public record UserDTO(
                 entity.getId(),
                 entity.getUsername(),
                 entity.getNickname(),
-                entity.getAvatarUrl(),
                 entity.getEmail(),
                 entity.getPhone(),
+                entity.getAvatarUrl(),
                 entity.getStatus(),
-                entity.getCreatedAt());
+                entity.getCreatedAt().toString(),
+                entity.isAdmin() // 使用 isAdmin() 方法
+        );
     }
 }
