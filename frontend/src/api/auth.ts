@@ -162,7 +162,12 @@ export const authApi = {
     /**
      * 更新用户信息
      */
-    async updateProfile(data: { nickname?: string; avatarUrl?: string }): Promise<UserProfile> {
+    async updateProfile(data: {
+        nickname?: string;
+        avatarUrl?: string;
+        email?: string;
+        phone?: string;
+    }): Promise<UserProfile> {
         const response = await authClient.put<UserProfile>('/user/profile', data);
 
         // 更新本地存储的用户信息
