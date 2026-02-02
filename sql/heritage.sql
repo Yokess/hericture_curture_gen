@@ -43,6 +43,7 @@ CREATE TABLE ich_successors (
     gender VARCHAR(10),
     birth_year VARCHAR(20),
     description TEXT,                -- 生平简介
+    official_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

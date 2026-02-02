@@ -52,8 +52,8 @@ export function Navbar() {
                                         key={item.path}
                                         to={item.path}
                                         className={`flex items-center space-x-2 transition-colors duration-200 ${isActive(item.path)
-                                                ? 'text-[#8B4513] font-medium'
-                                                : 'text-gray-600 hover:text-[#8B4513]'
+                                            ? 'text-[#8B4513] font-medium'
+                                            : 'text-gray-600 hover:text-[#8B4513]'
                                             }`}
                                     >
                                         <Icon className="w-4 h-4" />
@@ -65,9 +65,12 @@ export function Navbar() {
 
                         {/* CTA Buttons */}
                         <div className="flex items-center space-x-4">
-                            <button className="hidden sm:block px-4 py-2 text-[#8B4513] hover:bg-[#F5F5DC] rounded-lg transition-colors duration-200">
+                            <Link
+                                to="/login"
+                                className="hidden sm:block px-4 py-2 text-[#8B4513] hover:bg-[#F5F5DC] rounded-lg transition-colors duration-200"
+                            >
                                 登录
-                            </button>
+                            </Link>
                             <button className="px-5 py-2 bg-gradient-to-r from-[#8B4513] to-[#D4AF37] text-white rounded-lg hover:shadow-lg transition-all duration-200 font-medium">
                                 开始探索
                             </button>

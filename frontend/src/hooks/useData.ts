@@ -5,7 +5,6 @@ import type {
     DesignArtifact,
     VideoWithSteps,
     PostWithDetails,
-    UserWithStats,
 } from '@/types';
 import { api } from '@/api';
 
@@ -171,21 +170,28 @@ export function usePostsByTag(tag: string) {
 // ==================== 用户 Hooks ====================
 
 /**
- * 获取当前登录用户
+ * 注意：用户认证和状态管理请使用 useAuth Hook
+ * 
+ * 示例：
+ * ```typescript
+ * import { useAuth } from '@/hooks/useAuth';
+ * 
+ * function MyComponent() {
+ *   const { user, isAuthenticated, login, logout } = useAuth();
+ *   // user 包含: id, username, nickname, isAdmin
+ * }
+ * ```
+ * 
+ * useAuth 提供：
+ * - user: 当前登录用户信息
+ * - loading: 加载状态
+ * - isAuthenticated: 是否已登录
+ * - login: 登录方法
+ * - register: 注册方法
+ * - logout: 退出登录方法
+ * - refetchUser: 重新获取用户信息
  */
-export function useCurrentUser() {
-    return useAsync<UserWithStats | null>(() => api.user.getCurrentUser());
-}
 
-/**
- * 根据 ID 获取用户信息
- */
-export function useUser(id: number) {
-    return useAsync<UserWithStats | null>(
-        () => api.user.getById(id),
-        [id]
-    );
-}
 
 // ==================== 交互 Hooks ====================
 

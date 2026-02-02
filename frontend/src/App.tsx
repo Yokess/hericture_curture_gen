@@ -4,6 +4,7 @@ import Projects from './pages/Projects';
 import AIDesign from './pages/AIDesign';
 import VideoArchive from './pages/VideoArchive';
 import Community from './pages/Community';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/ai-design" element={<AIDesign />} />
         <Route path="/video-archive" element={<VideoArchive />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </div>
   );

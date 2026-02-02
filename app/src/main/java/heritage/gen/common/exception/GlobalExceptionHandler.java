@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    
+
     /**
      * 处理业务异常
      */
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         log.warn("业务异常: code={}, message={}", e.getCode(), e.getMessage());
         return Result.error(e.getCode(), e.getMessage());
     }
-    
+
     /**
      * 处理参数校验异常
      */
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
         log.warn("参数校验失败: {}", message);
         return Result.error(ErrorCode.BAD_REQUEST, message);
     }
-    
+
     /**
      * 处理绑定异常
      */
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         log.warn("参数绑定失败: {}", message);
         return Result.error(ErrorCode.BAD_REQUEST, message);
     }
-    
+
     /**
      * 处理文件上传大小超限异常
      */
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
         log.warn("文件上传大小超限: {}", e.getMessage());
         return Result.error(ErrorCode.BAD_REQUEST, "文件大小超过限制");
     }
-    
+
     /**
      * 处理非法参数异常
      */
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
         log.warn("非法参数: {}", e.getMessage());
         return Result.error(ErrorCode.BAD_REQUEST, e.getMessage());
     }
-    
+
     /**
      * 处理 AI 服务网络异常（SSL握手失败、连接超时等）
      * 统一返回 HTTP 200，通过业务错误码区分异常类型
@@ -89,22 +89,22 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public Result<Void> handleResourceAccessException(ResourceAccessException e) {
         log.error("AI服务连接失败: {}", e.getMessage(), e);
-        
+
         // 判断具体异常类型
         Throwable cause = e.getCause();
         if (cause instanceof SocketTimeoutException) {
             return Result.error(ErrorCode.AI_SERVICE_TIMEOUT, "AI服务响应超时，请稍后重试");
         }
-        
+
         // SSL握手失败或其他网络问题
         String message = e.getMessage();
         if (message != null && message.contains("handshake")) {
             return Result.error(ErrorCode.AI_SERVICE_UNAVAILABLE, "AI服务连接失败（网络不稳定），请检查网络或稍后重试");
         }
-        
+
         return Result.error(ErrorCode.AI_SERVICE_UNAVAILABLE, "AI服务暂时不可用，请稍后重试");
     }
-    
+
     /**
      * 处理 AI 服务调用异常
      * 统一返回 HTTP 200，通过业务错误码区分异常类型
@@ -113,7 +113,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public Result<Void> handleRestClientException(RestClientException e) {
         log.error("AI服务调用失败: {}", e.getMessage(), e);
-        
+
         String message = e.getMessage();
         if (message != null) {
             if (message.contains("401") || message.contains("Unauthorized")) {
@@ -123,10 +123,62 @@ public class GlobalExceptionHandler {
                 return Result.error(ErrorCode.AI_RATE_LIMIT_EXCEEDED, "AI服务调用过于频繁，请稍后重试");
             }
         }
-        
+
         return Result.error(ErrorCode.AI_SERVICE_ERROR, "AI服务调用失败，请稍后重试");
     }
-    
+
+    /**
+     * 处理 Sa-Token 未登录异常
+     */
+    @ExceptionHandler(cn.dev33.satoken.exception.NotLoginException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleNotLoginException(cn.dev33.satoken.exception.NotLoginException e) {
+        log.warn("用户未登录: {}", e.getMessage());
+
+        String message;
+        switch (e.getType()) {
+            case cn.dev33.satoken.exception.NotLoginException.NOT_TOKEN:
+                message = "未提供登录凭证";
+                break;
+            case cn.dev33.satoken.exception.NotLoginException.INVALID_TOKEN:
+                message = "无效的登录凭证";
+                break;
+            case cn.dev33.satoken.exception.NotLoginException.TOKEN_TIMEOUT:
+                message = "登录已过期，请重新登录";
+                break;
+            case cn.dev33.satoken.exception.NotLoginException.BE_REPLACED:
+                message = "您的账号已在其他设备登录";
+                break;
+            case cn.dev33.satoken.exception.NotLoginException.KICK_OUT:
+                message = "您已被强制下线";
+                break;
+            default:
+                message = "请先登录";
+        }
+
+        return Result.error(ErrorCode.UNAUTHORIZED, message);
+    }
+
+    /**
+     * 处理 Sa-Token 无权限异常
+     */
+    @ExceptionHandler(cn.dev33.satoken.exception.NotPermissionException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleNotPermissionException(cn.dev33.satoken.exception.NotPermissionException e) {
+        log.warn("权限不足: permission={}", e.getPermission());
+        return Result.error(ErrorCode.FORBIDDEN, "权限不足，无法访问该资源");
+    }
+
+    /**
+     * 处理 Sa-Token 无角色异常
+     */
+    @ExceptionHandler(cn.dev33.satoken.exception.NotRoleException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleNotRoleException(cn.dev33.satoken.exception.NotRoleException e) {
+        log.warn("角色不足: role={}", e.getRole());
+        return Result.error(ErrorCode.FORBIDDEN, "权限不足，需要管理员权限");
+    }
+
     /**
      * 处理其他未知异常
      * 统一返回 HTTP 200，通过业务错误码区分异常类型
