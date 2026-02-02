@@ -31,7 +31,7 @@ authClient.interceptors.request.use(
 // 响应拦截器 - 处理统一响应格式和 401
 authClient.interceptors.response.use(
     (response) => {
-        // 后端返回格式：{ code: 200, message: "success", data: {...} }
+        // 后端返回格式:{ code: 200, message: "success", data: {...} }
         const { code, message, data } = response.data;
 
         if (code === 200) {
@@ -76,6 +76,7 @@ export interface LoginResponse {
     nickname: string;
     token: string;
     isAdmin: boolean;
+    avatarUrl?: string;
 }
 
 /**
@@ -119,6 +120,7 @@ export const authApi = {
                 username: loginData.username,
                 nickname: loginData.nickname,
                 isAdmin: loginData.isAdmin,
+                avatarUrl: loginData.avatarUrl,
             }));
         }
 
@@ -162,6 +164,18 @@ export const authApi = {
      */
     async updateProfile(data: { nickname?: string; avatarUrl?: string }): Promise<UserProfile> {
         const response = await authClient.put<UserProfile>('/user/profile', data);
+
+        // 更新本地存储的用户信息
+        const localUser = this.getLocalUser();
+        if (localUser) {
+            const updatedUser = {
+                ...localUser,
+                nickname: data.nickname || localUser.nickname,
+                avatarUrl: data.avatarUrl || localUser.avatarUrl,
+            };
+            localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+        }
+
         return response.data;
     },
 
@@ -182,7 +196,7 @@ export const authApi = {
     /**
      * 获取本地存储的用户信息
      */
-    getLocalUser(): { id: number; username: string; nickname: string; isAdmin: boolean } | null {
+    getLocalUser(): { id: number; username: string; nickname: string; isAdmin: boolean; avatarUrl?: string } | null {
         const userStr = localStorage.getItem(USER_KEY);
         if (userStr) {
             try {
@@ -201,4 +215,3 @@ export const authApi = {
         return localStorage.getItem(TOKEN_KEY);
     },
 };
-

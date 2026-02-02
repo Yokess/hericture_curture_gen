@@ -62,7 +62,9 @@ public class UserAuthController {
         Long userId = StpUtil.getLoginIdAsLong();
         String nickname = body.get("nickname");
         String avatarUrl = body.get("avatarUrl");
-        return Result.success(authService.updateUserProfile(userId, nickname, avatarUrl));
+        String email = body.get("email");
+        String phone = body.get("phone");
+        return Result.success(authService.updateUserProfile(userId, nickname, avatarUrl, email, phone));
     }
 
     /**

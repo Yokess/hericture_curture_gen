@@ -8,9 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql)](https://www.postgresql.org/)
 
-
 </div>
-
 
 ---
 
@@ -109,13 +107,3 @@
 - **F4.3 社交互动**：支持对作品进行点赞、评论和收藏
 - **F4.4 个人成就系统**：记录用户的创作数量、获赞数，授予"数字传承官"等荣誉勋章
 - PDF 简历分析报告导出
-
-### 知识库管理模块
-
-- 多格式支持（PDF、DOCX、DOC、TXT、Markdown）
-- 文档上传和自动分块
-- 异步向量化处理
-- RAG 检索增强生成
-- 流式响应（SSE）
-- 智能问答对话
-- 知识库统计信息

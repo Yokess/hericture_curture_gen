@@ -8,6 +8,9 @@ interface LocalUser {
     username: string;
     nickname: string;
     isAdmin: boolean;
+    avatarUrl?: string; // 用户头像 URL(可选)
+    email?: string; // 邮箱(可选)
+    phone?: string; // 手机号(可选)
 }
 
 interface UseAuthReturn {
@@ -51,6 +54,7 @@ export function useAuth(): UseAuthReturn {
                         username: currentUser.username,
                         nickname: currentUser.nickname,
                         isAdmin: false, // 从服务器获取的用户信息没有 isAdmin 字段
+                        avatarUrl: currentUser.avatarUrl, // 包含头像 URL
                     });
                 }
             }

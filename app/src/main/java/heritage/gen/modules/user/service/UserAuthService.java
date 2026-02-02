@@ -100,6 +100,7 @@ public class UserAuthService {
                 "userId", user.getId(),
                 "username", user.getUsername(),
                 "nickname", user.getNickname() != null ? user.getNickname() : user.getUsername(),
+                "avatarUrl", user.getAvatarUrl(),
                 "isAdmin", user.isAdmin());
     }
 
@@ -144,10 +145,12 @@ public class UserAuthService {
      * @param userId    用户 ID
      * @param nickname  昵称
      * @param avatarUrl 头像 URL
+     * @param email     邮箱
+     * @param phone     手机号
      * @return 更新后的用户信息
      */
     @Transactional
-    public UserDTO updateUserProfile(Long userId, String nickname, String avatarUrl) {
+    public UserDTO updateUserProfile(Long userId, String nickname, String avatarUrl, String email, String phone) {
         SysUserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "用户不存在"));
 
@@ -157,6 +160,24 @@ public class UserAuthService {
 
         if (avatarUrl != null && !avatarUrl.isBlank()) {
             user.setAvatarUrl(avatarUrl);
+        }
+
+        // 更新邮箱(需要检查唯一性)
+        if (email != null && !email.isBlank()) {
+            // 检查邮箱是否已被其他用户使用
+            if (userRepository.existsByEmail(email)) {
+                SysUserEntity existingUser = userRepository.findByEmail(email)
+                        .orElse(null);
+                if (existingUser != null && !existingUser.getId().equals(userId)) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST, "邮箱已被其他用户使用");
+                }
+            }
+            user.setEmail(email);
+        }
+
+        // 更新手机号
+        if (phone != null && !phone.isBlank()) {
+            user.setPhone(phone);
         }
 
         SysUserEntity updatedUser = userRepository.save(user);

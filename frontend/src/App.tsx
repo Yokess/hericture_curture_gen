@@ -5,6 +5,7 @@ import AIDesign from './pages/AIDesign';
 import VideoArchive from './pages/VideoArchive';
 import Community from './pages/Community';
 import Login from './pages/Login';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/video-archive" element={<VideoArchive />} />
         <Route path="/community" element={<Community />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   );
