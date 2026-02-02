@@ -45,6 +45,15 @@ export function useAuth(): UseAuthReturn {
             const localUser = authApi.getLocalUser();
             if (localUser) {
                 setUser(localUser);
+                setLoading(false);
+
+                // 后台异步验证 token 有效性（不阻塞 UI）
+                authApi.getCurrentUser().catch((error) => {
+                    console.warn('Token 验证失败，可能已过期:', error);
+                    // 如果 token 无效，清除用户信息
+                    setUser(null);
+                    authApi.logout();
+                });
             } else {
                 // 如果本地没有，从服务器获取
                 const currentUser = await authApi.getCurrentUser();
@@ -53,15 +62,17 @@ export function useAuth(): UseAuthReturn {
                         id: currentUser.id,
                         username: currentUser.username,
                         nickname: currentUser.nickname,
-                        isAdmin: false, // 从服务器获取的用户信息没有 isAdmin 字段
-                        avatarUrl: currentUser.avatarUrl, // 包含头像 URL
+                        isAdmin: currentUser.isAdmin || false,
+                        avatarUrl: currentUser.avatarUrl,
                     });
+                } else {
+                    setUser(null);
                 }
+                setLoading(false);
             }
         } catch (error) {
             console.error('获取用户信息失败:', error);
             setUser(null);
-        } finally {
             setLoading(false);
         }
     }, []);
@@ -82,6 +93,7 @@ export function useAuth(): UseAuthReturn {
                 username: response.username,
                 nickname: response.nickname,
                 isAdmin: response.isAdmin,
+                avatarUrl: response.avatarUrl,
             });
         } catch (error: any) {
             throw new Error(error.response?.data?.message || error.message || '登录失败');
