@@ -43,6 +43,8 @@ export interface SuccessorListItem {
     gender?: string;
     birthYear?: string;
     projectName: string;
+    description?: string;
+    officialUrl?: string;
 }
 
 /**

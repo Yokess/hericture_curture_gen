@@ -35,8 +35,8 @@ export function ProjectCard({
                     <div className="flex items-center space-x-3">
                         <div className="text-4xl">{categoryIcon}</div>
                         <div>
-                            <div className="text-sm text-white/80">{category}</div>
-                            <div className="font-serif text-lg font-bold text-white">{name}</div>
+                            <div className="text-sm text-gray-700 font-medium">{category}</div>
+                            <div className="font-serif text-lg font-bold text-[#8B4513]">{name}</div>
                         </div>
                     </div>
                 </div>

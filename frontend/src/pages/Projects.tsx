@@ -12,6 +12,7 @@ import { heritageApi, type ProjectListItem, type PageResponse } from '@/api/heri
 export default function Projects() {
     const [searchQuery, setSearchQuery] = useState('');
     const [category, setCategory] = useState('all');
+    const [location, setLocation] = useState('all');
     const [batch, setBatch] = useState('all');
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(12);
@@ -44,6 +45,10 @@ export default function Projects() {
                     params.category = category;
                 }
 
+                if (location !== 'all') {
+                    params.location = location;
+                }
+
                 response = await heritageApi.listProjects(params);
             }
 
@@ -60,12 +65,12 @@ export default function Projects() {
     // 监听筛选条件变化
     useEffect(() => {
         setCurrentPage(0); // 重置到第一页
-    }, [searchQuery, category, batch]);
+    }, [searchQuery, category, location, batch]);
 
     // 监听页码和筛选条件变化
     useEffect(() => {
         fetchProjects();
-    }, [currentPage, searchQuery, category]);
+    }, [currentPage, searchQuery, category, location]);
 
     // 分页处理
     const handlePageChange = (page: number) => {
@@ -171,6 +176,7 @@ export default function Projects() {
                                 <ProjectFilters
                                     onSearchChange={setSearchQuery}
                                     onCategoryChange={setCategory}
+                                    onLocationChange={setLocation}
                                     onBatchChange={setBatch}
                                 />
 

@@ -8,13 +8,17 @@ public record SuccessorListItemDTO(
         String name,
         String gender,
         String birthYear,
-        String projectName) {
+        String projectName,
+        String description,
+        String officialUrl) {
     public static SuccessorListItemDTO fromEntity(IchSuccessorEntity entity, String projectName) {
         return new SuccessorListItemDTO(
                 entity.getId(),
                 entity.getName(),
                 entity.getGender(),
                 entity.getBirthYear(),
-                projectName);
+                projectName,
+                entity.getDescription(),
+                entity.getOfficialUrl());
     }
 }
