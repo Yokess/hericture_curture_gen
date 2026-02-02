@@ -27,8 +27,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 50MB  # 支持知识库上传（简历限制在业务层检查）
-      max-request-size: 50MB
+      max-file-size: 500MB  # 支持视频上传（最大 500MB）
+      max-request-size: 500MB
   
 
   # Redisson配置 (使用 spring.redis.redisson，参考官方文档)
@@ -71,19 +71,11 @@ spring:
 
 # Application custom configuration
 app:
-  resume:
-    upload-dir: ${java.io.tmpdir}/ai-interview/resumes
-    allowed-types:
-      - application/pdf
-      - application/msword
-      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
-      - text/plain
-
-  # RustFS (S3兼容) 存储配置
+  # 对象存储配置（MinIO/S3兼容）
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
-    access-key: ${APP_STORAGE_ACCESS_KEY:wr45VXJZhCxc6FAWz0YR}
-    secret-key: ${APP_STORAGE_SECRET_KEY:GtKxV57WJkpw4CvASPBzTy2DYElLnRqh8dIXQa0m}
+    access-key: ${APP_STORAGE_ACCESS_KEY:minioadmin}
+    secret-key: ${APP_STORAGE_SECRET_KEY:minioadmin}
     bucket: ${APP_STORAGE_BUCKET:heritage-culture}
     region: ${APP_STORAGE_REGION:us-east-1}
   
