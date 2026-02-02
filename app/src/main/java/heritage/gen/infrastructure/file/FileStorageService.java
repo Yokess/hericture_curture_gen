@@ -28,44 +28,37 @@ public class FileStorageService {
     private final StorageConfigProperties storageConfig;
 
     /**
-     * 上传简历文件
+     * 上传用户头像
      */
-    public String uploadResume(MultipartFile file) {
-        return uploadFile(file, "resumes");
+    public FileUploadResult uploadAvatar(MultipartFile file) {
+        return uploadFile(file, "avatars");
     }
 
     /**
-     * 下载简历文件
+     * 上传非遗项目图片
      */
-    public byte[] downloadResume(String fileKey) {
-        // 先检查文件是否存在
-        if (!fileExists(fileKey)) {
-            throw new BusinessException(ErrorCode.STORAGE_DOWNLOAD_FAILED, "文件不存在: " + fileKey);
-        }
-        
-        try {
-            GetObjectRequest getRequest = GetObjectRequest.builder()
-                    .bucket(storageConfig.getBucket())
-                    .key(fileKey)
-                    .build();
-            return s3Client.getObjectAsBytes(getRequest).asByteArray();
-        } catch (S3Exception e) {
-            log.error("下载文件失败: {} - {}", fileKey, e.getMessage(), e);
-            throw new BusinessException(ErrorCode.STORAGE_DOWNLOAD_FAILED, "文件下载失败: " + e.getMessage());
-        }
+    public FileUploadResult uploadProjectImage(MultipartFile file) {
+        return uploadFile(file, "project-images");
     }
 
     /**
-     * 删除简历文件
+     * 上传设计作品图片
      */
-    public void deleteResume(String fileKey) {
-        deleteFile(fileKey);
+    public FileUploadResult uploadDesignImage(MultipartFile file) {
+        return uploadFile(file, "design-images");
+    }
+
+    /**
+     * 上传视频文件
+     */
+    public FileUploadResult uploadVideo(MultipartFile file) {
+        return uploadFile(file, "videos");
     }
 
     /**
      * 上传知识库文件
      */
-    public String uploadKnowledgeBase(MultipartFile file) {
+    public FileUploadResult uploadKnowledgeBase(MultipartFile file) {
         return uploadFile(file, "knowledgebases");
     }
 
@@ -101,8 +94,12 @@ public class FileStorageService {
 
     /**
      * 通用文件上传方法
+     * 
+     * @param file   上传的文件
+     * @param prefix 存储路径前缀
+     * @return 文件上传结果
      */
-    private String uploadFile(MultipartFile file, String prefix) {
+    public FileUploadResult uploadFile(MultipartFile file, String prefix) {
         String originalFilename = file.getOriginalFilename();
         String fileKey = generateFileKey(originalFilename, prefix);
 
@@ -116,12 +113,19 @@ public class FileStorageService {
 
             s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             log.info("文件上传成功: {} -> {}", originalFilename, fileKey);
-            return fileKey;
+
+            String storageUrl = getFileUrl(fileKey);
+            return new FileUploadResult(
+                    fileKey,
+                    storageUrl,
+                    originalFilename,
+                    file.getContentType(),
+                    file.getSize());
         } catch (IOException e) {
             log.error("读取上传文件失败: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.STORAGE_UPLOAD_FAILED, "文件读取失败");
         } catch (S3Exception e) {
-            log.error("上传文件到RustFS失败: {}", e.getMessage(), e);
+            log.error("上传文件到存储服务失败: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.STORAGE_UPLOAD_FAILED, "文件存储失败: " + e.getMessage());
         }
     }
@@ -176,7 +180,7 @@ public class FileStorageService {
             log.warn("文件不存在，跳过删除: {}", fileKey);
             return;
         }
-        
+
         try {
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                     .bucket(storageConfig.getBucket())

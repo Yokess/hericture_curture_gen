@@ -92,11 +92,6 @@ public class FileTypeConstants {
      */
     public static final String PREFIX_KNOWLEDGE_BASE = "knowledgebases";
 
-    /**
-     * 简历文件存储前缀
-     */
-    public static final String PREFIX_RESUME = "resumes";
-
     private FileTypeConstants() {
         // 工具类，禁止实例化
     }

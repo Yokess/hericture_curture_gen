@@ -36,12 +36,12 @@ public class KnowledgeBaseUploadService {
     private final VectorizeStreamProducer vectorizeStreamProducer;
 
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-    
+
     /**
      * 上传知识库文件
      *
-     * @param file 知识库文件
-     * @param name 知识库名称（可选，如果为空则从文件名提取）
+     * @param file     知识库文件
+     * @param name     知识库名称（可选，如果为空则从文件名提取）
      * @param category 分类（可选）
      * @return 上传结果和存储信息（包含duplicate字段，表示是否为重复上传）
      */
@@ -70,10 +70,11 @@ public class KnowledgeBaseUploadService {
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "无法从文件中提取文本内容，请确保文件格式正确");
         }
 
-        // 5. 保存文件到RustFS
-        String fileKey = storageService.uploadKnowledgeBase(file);
-        String fileUrl = storageService.getFileUrl(fileKey);
-        log.info("知识库已存储到RustFS: {}", fileKey);
+        // 5. 保存文件到存储服务
+        var uploadResult = storageService.uploadKnowledgeBase(file);
+        String fileKey = uploadResult.storageKey();
+        String fileUrl = uploadResult.storageUrl();
+        log.info("知识库已存储: {}", fileKey);
 
         // 6. 保存知识库元数据到数据库（状态为 PENDING）
         KnowledgeBaseEntity savedKb = saveKnowledgeBase(file, name, category, fileKey, fileUrl, fileHash);
@@ -85,20 +86,17 @@ public class KnowledgeBaseUploadService {
 
         // 8. 返回结果（状态为 PENDING，前端可轮询获取最新状态）
         return Map.of(
-            "knowledgeBase", Map.of(
-                "id", savedKb.getId(),
-                "name", savedKb.getName(),
-                "category", savedKb.getCategory() != null ? savedKb.getCategory() : "",
-                "fileSize", savedKb.getFileSize(),
-                "contentLength", content.length(),
-                "vectorStatus", VectorStatus.PENDING.name()
-            ),
-            "storage", Map.of(
-                "fileKey", fileKey,
-                "fileUrl", fileUrl
-            ),
-            "duplicate", false
-        );
+                "knowledgeBase", Map.of(
+                        "id", savedKb.getId(),
+                        "name", savedKb.getName(),
+                        "category", savedKb.getCategory() != null ? savedKb.getCategory() : "",
+                        "fileSize", savedKb.getFileSize(),
+                        "contentLength", content.length(),
+                        "vectorStatus", VectorStatus.PENDING.name()),
+                "storage", Map.of(
+                        "fileKey", fileKey,
+                        "fileUrl", fileUrl),
+                "duplicate", false);
     }
 
     /**
@@ -106,51 +104,49 @@ public class KnowledgeBaseUploadService {
      */
     private void validateContentType(String contentType, String fileName) {
         fileValidationService.validateContentType(
-            contentType,
-            fileName,
-            fileValidationService::isKnowledgeBaseMimeType,
-            fileValidationService::isMarkdownExtension,
-            "不支持的文件类型: " + contentType + "，支持的类型：PDF、DOCX、DOC、TXT、MD等"
-        );
+                contentType,
+                fileName,
+                fileValidationService::isKnowledgeBaseMimeType,
+                fileValidationService::isMarkdownExtension,
+                "不支持的文件类型: " + contentType + "，支持的类型：PDF、DOCX、DOC、TXT、MD等");
     }
-    
+
     /**
      * 处理重复知识库（更新访问计数）
      */
     @Transactional(rollbackFor = Exception.class)
     private Map<String, Object> handleDuplicateKnowledgeBase(KnowledgeBaseEntity kb, String fileHash) {
         log.info("检测到重复知识库，返回已有记录: kbId={}", kb.getId());
-        
+
         // 更新访问计数（在事务中）
         kb.incrementAccessCount();
         knowledgeBaseRepository.save(kb);
-        
+
         // 重复知识库的向量数据应该已经存在，不需要重新向量化
         return Map.of(
-            "knowledgeBase", Map.of(
-                "id", kb.getId(),
-                "name", kb.getName(),
-                "fileSize", kb.getFileSize(),
-                "contentLength", 0  // 不再存储content，所以长度为0
-            ),
-            "storage", Map.of(
-                "fileKey", kb.getStorageKey() != null ? kb.getStorageKey() : "",
-                "fileUrl", kb.getStorageUrl() != null ? kb.getStorageUrl() : ""
-            ),
-            "duplicate", true
-        );
+                "knowledgeBase", Map.of(
+                        "id", kb.getId(),
+                        "name", kb.getName(),
+                        "fileSize", kb.getFileSize(),
+                        "contentLength", 0 // 不再存储content，所以长度为0
+                ),
+                "storage", Map.of(
+                        "fileKey", kb.getStorageKey() != null ? kb.getStorageKey() : "",
+                        "fileUrl", kb.getStorageUrl() != null ? kb.getStorageUrl() : ""),
+                "duplicate", true);
     }
-    
+
     /**
      * 保存新知识库元数据到数据库
      */
     @Transactional(rollbackFor = Exception.class)
     private KnowledgeBaseEntity saveKnowledgeBase(MultipartFile file, String name, String category,
-                                                  String storageKey, String storageUrl, String fileHash) {
+            String storageKey, String storageUrl, String fileHash) {
         try {
             KnowledgeBaseEntity kb = new KnowledgeBaseEntity();
             kb.setFileHash(fileHash);
-            kb.setName(name != null && !name.trim().isEmpty() ? name : extractNameFromFilename(file.getOriginalFilename()));
+            kb.setName(name != null && !name.trim().isEmpty() ? name
+                    : extractNameFromFilename(file.getOriginalFilename()));
             kb.setCategory(category != null && !category.trim().isEmpty() ? category.trim() : null);
             kb.setOriginalFilename(file.getOriginalFilename());
             kb.setFileSize(file.getSize());
@@ -159,7 +155,8 @@ public class KnowledgeBaseUploadService {
             kb.setStorageUrl(storageUrl);
 
             KnowledgeBaseEntity saved = knowledgeBaseRepository.save(kb);
-            log.info("知识库已保存: id={}, name={}, category={}, hash={}", saved.getId(), saved.getName(), saved.getCategory(), fileHash);
+            log.info("知识库已保存: id={}, name={}, category={}, hash={}", saved.getId(), saved.getName(),
+                    saved.getCategory(), fileHash);
             return saved;
         } catch (Exception e) {
             log.error("保存知识库失败: {}", e.getMessage(), e);
@@ -190,7 +187,7 @@ public class KnowledgeBaseUploadService {
     @Transactional
     public void revectorize(Long kbId) {
         KnowledgeBaseEntity kb = knowledgeBaseRepository.findById(kbId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "知识库不存在"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "知识库不存在"));
 
         log.info("开始重新向量化知识库: kbId={}, name={}", kbId, kb.getName());
 
@@ -211,4 +208,3 @@ public class KnowledgeBaseUploadService {
         log.info("重新向量化任务已发送: kbId={}", kbId);
     }
 }
-
