@@ -7,6 +7,10 @@ import VideoArchive from './pages/VideoArchive';
 import Community from './pages/Community';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import { AdminLayout } from './components/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import KnowledgeBase from './pages/admin/KnowledgeBase';
 
 function App() {
   return (
@@ -20,6 +24,14 @@ function App() {
         <Route path="/community" element={<Community />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* 管理后台路由 */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="knowledge-base" element={<KnowledgeBase />} />
+          {/* 其他管理路由待补充 */}
+        </Route>
       </Routes>
     </div>
   );

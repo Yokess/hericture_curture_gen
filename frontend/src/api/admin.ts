@@ -99,10 +99,88 @@ export const adminApi = {
         await apiClient.put(`/api/admin/users/${userId}/role`, { isAdmin });
     },
 
+    // ... User methods ...
+
     /**
      * 删除用户
      */
     async deleteUser(userId: number): Promise<void> {
         await apiClient.delete(`/api/admin/users/${userId}`);
     },
+
+    // ========== 非遗项目管理 ==========
+
+    async listHeritageProjects(params?: {
+        page?: number;
+        size?: number;
+        keyword?: string;
+        category?: string;
+    }): Promise<PageResult<HeritageProject>> {
+        const response = await apiClient.get<Result<PageResult<HeritageProject>>>('/api/admin/heritage/projects', { params });
+        return response.data.data;
+    },
+
+    async createHeritageProject(data: Partial<HeritageProject>): Promise<HeritageProject> {
+        const response = await apiClient.post<Result<HeritageProject>>('/api/admin/heritage/projects', data);
+        return response.data.data;
+    },
+
+    async updateHeritageProject(id: number, data: Partial<HeritageProject>): Promise<HeritageProject> {
+        const response = await apiClient.put<Result<HeritageProject>>(`/api/admin/heritage/projects/${id}`, data);
+        return response.data.data;
+    },
+
+    async deleteHeritageProject(id: number): Promise<void> {
+        await apiClient.delete(`/api/admin/heritage/projects/${id}`);
+    },
+
+    // ========== 传承人管理 ==========
+
+    async listSuccessors(params?: {
+        page?: number;
+        size?: number;
+        keyword?: string;
+        projectId?: number;
+    }): Promise<PageResult<Successor>> {
+        const response = await apiClient.get<Result<PageResult<Successor>>>('/api/admin/heritage/successors', { params });
+        return response.data.data;
+    },
+
+    async createSuccessor(data: Partial<Successor>): Promise<Successor> {
+        const response = await apiClient.post<Result<Successor>>('/api/admin/heritage/successors', data);
+        return response.data.data;
+    },
+
+    async updateSuccessor(id: number, data: Partial<Successor>): Promise<Successor> {
+        const response = await apiClient.put<Result<Successor>>(`/api/admin/heritage/successors/${id}`, data);
+        return response.data.data;
+    },
+
+    async deleteSuccessor(id: number): Promise<void> {
+        await apiClient.delete(`/api/admin/heritage/successors/${id}`);
+    },
 };
+
+// ... Type Definitions ...
+export interface HeritageProject {
+    id: number;
+    officialId: string;
+    name: string;
+    category?: string;
+    location?: string;
+    description?: string;
+    batch?: string;
+    officialUrl?: string;
+    createdAt?: string;
+}
+
+export interface Successor {
+    id: number;
+    projectId: number;
+    name: string;
+    gender?: string;
+    birthYear?: string;
+    description?: string;
+    officialUrl?: string;
+    createdAt?: string;
+}

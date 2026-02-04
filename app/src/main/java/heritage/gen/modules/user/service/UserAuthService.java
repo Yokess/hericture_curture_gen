@@ -95,13 +95,15 @@ public class UserAuthService {
 
         log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
 
-        return Map.of(
-                "token", token,
-                "userId", user.getId(),
-                "username", user.getUsername(),
-                "nickname", user.getNickname() != null ? user.getNickname() : user.getUsername(),
-                "avatarUrl", user.getAvatarUrl(),
-                "isAdmin", user.isAdmin());
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("token", token);
+        result.put("userId", user.getId());
+        result.put("username", user.getUsername());
+        result.put("nickname", user.getNickname() != null ? user.getNickname() : user.getUsername());
+        result.put("avatarUrl", user.getAvatarUrl());
+        result.put("isAdmin", user.isAdmin());
+
+        return result;
     }
 
     /**

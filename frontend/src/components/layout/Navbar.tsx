@@ -80,8 +80,8 @@ export function Navbar() {
                                         key={item.path}
                                         to={item.path}
                                         className={`flex items-center space-x-2 transition-colors duration-200 ${isActive(item.path)
-                                                ? 'text-[#8B4513] font-medium'
-                                                : 'text-gray-600 hover:text-[#8B4513]'
+                                            ? 'text-[#8B4513] font-medium'
+                                            : 'text-gray-600 hover:text-[#8B4513]'
                                             }`}
                                     >
                                         <Icon className="w-4 h-4" />
@@ -121,6 +121,12 @@ export function Navbar() {
                                             <UserIcon className="mr-2 h-4 w-4" />
                                             <span>个人中心</span>
                                         </DropdownMenuItem>
+                                        {user.isAdmin && (
+                                            <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                                                <Settings className="mr-2 h-4 w-4" />
+                                                <span>后台管理</span>
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem onClick={() => navigate('/settings')}>
                                             <Settings className="mr-2 h-4 w-4" />
                                             <span>设置</span>
