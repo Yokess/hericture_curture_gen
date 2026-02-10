@@ -4,6 +4,7 @@ import heritage.gen.modules.heritage.model.IchProjectEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,7 +13,13 @@ import java.util.List;
 /**
  * 非遗项目 Repository
  */
-public interface IchProjectRepository extends JpaRepository<IchProjectEntity, Long> {
+public interface IchProjectRepository
+        extends JpaRepository<IchProjectEntity, Long>, JpaSpecificationExecutor<IchProjectEntity> {
+
+    /**
+     * 检查项目官方ID是否已存在
+     */
+    boolean existsByOfficialId(String officialId);
 
     /**
      * 根据类别分页查询
