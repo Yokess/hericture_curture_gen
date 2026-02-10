@@ -53,7 +53,7 @@ CREATE TABLE ich_knowledge_chunks (
     ref_id BIGINT NOT NULL,          -- 关联项目或传承人ID
     ref_type VARCHAR(20) NOT NULL,    -- 'PROJECT' / 'SUCCESSOR'
     content_text TEXT,
-    embedding vector(1536),          -- 混元 Embedding 维度，请根据实际模型调整（通常1024或1536）
+    embedding vector(1536),          -- 百炼 Embedding 维度，请根据实际模型调整（通常1024或1536）
     
     -- [新增] 增强 RAG 上下文理解
     chunk_order INT,                  -- 同一个文档中的切片顺序

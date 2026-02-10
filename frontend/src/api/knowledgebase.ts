@@ -13,6 +13,7 @@ export interface KnowledgeBaseItem {
     questionCount: number;
     vectorStatus: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
     vectorError?: string;
+    chunkCount?: number;  // 分块数量
 }
 
 // 统计信息接口
@@ -78,6 +79,6 @@ export const knowledgebaseApi = {
 
     // 重新向量化
     revectorize: async (id: number): Promise<void> => {
-        await axios.post(`${BASE_URL}/${id}/vectorize`);
+        await axios.post(`${BASE_URL}/${id}/revectorize`);
     }
 };
