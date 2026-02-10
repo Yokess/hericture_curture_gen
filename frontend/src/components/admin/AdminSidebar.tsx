@@ -2,11 +2,12 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
-    BookOpen,
     Database,
     MessageSquare,
     Home,
-    LogOut
+    LogOut,
+    Landmark,
+    UserCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,7 +19,8 @@ export function AdminSidebar() {
     const menuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: '概况' },
         { path: '/admin/users', icon: Users, label: '用户管理' },
-        { path: '/admin/projects', icon: BookOpen, label: '非遗管理' },
+        { path: '/admin/heritage-projects', icon: Landmark, label: '非遗项目' },
+        { path: '/admin/successors', icon: UserCheck, label: '传承人管理' },
         { path: '/admin/knowledge-base', icon: Database, label: '知识库管理' },
         { path: '/admin/community', icon: MessageSquare, label: '社区管理' },
     ];
