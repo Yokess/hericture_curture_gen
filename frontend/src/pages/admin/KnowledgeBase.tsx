@@ -15,9 +15,23 @@ import {
     Database,
     MessageSquare,
     FolderOpen,
+    Tag,
+    Eye,
+    Filter,
+    SortAsc,
+    Info,
 } from 'lucide-react';
 import { knowledgebaseApi, type KnowledgeBaseItem, type KnowledgeBaseStats } from '@/api/knowledgebase';
 import { FileUploadDialog } from '@/components/knowledgebase/FileUploadDialog';
+import { CategoryEditDialog } from '@/components/knowledgebase/CategoryEditDialog';
+import { KnowledgeBaseDetailDialog } from '@/components/knowledgebase/KnowledgeBaseDetailDialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export default function KnowledgeBase() {
 
@@ -27,11 +41,36 @@ export default function KnowledgeBase() {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
+    // 新增状态
+    const [categories, setCategories] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<string>('time');
+    const [categoryEditDialog, setCategoryEditDialog] = useState<{
+        open: boolean;
+        id: number;
+        name: string;
+        category: string | null;
+    }>({ open: false, id: 0, name: '', category: null });
+    const [detailDialog, setDetailDialog] = useState<{
+        open: boolean;
+        id: number;
+    }>({ open: false, id: 0 });
+
     // 加载知识库列表
     const loadKnowledgeBases = async () => {
         setLoading(true);
         try {
-            const data = await knowledgebaseApi.listKnowledgeBases();
+            let data: KnowledgeBaseItem[];
+
+            // 根据分类筛选
+            if (selectedCategory === 'all') {
+                data = await knowledgebaseApi.listKnowledgeBases(sortBy);
+            } else if (selectedCategory === 'uncategorized') {
+                data = await knowledgebaseApi.getUncategorized();
+            } else {
+                data = await knowledgebaseApi.getByCategory(selectedCategory);
+            }
+
             setKnowledgeBases(data);
         } catch (error: any) {
             console.error('加载知识库列表失败:', error);
@@ -50,11 +89,27 @@ export default function KnowledgeBase() {
         }
     };
 
+    // 加载分类列表
+    const loadCategories = async () => {
+        try {
+            const data = await knowledgebaseApi.getAllCategories();
+            setCategories(data);
+        } catch (error: any) {
+            console.error('加载分类列表失败:', error);
+        }
+    };
+
     // 初始化加载
     useEffect(() => {
         loadKnowledgeBases();
         loadStats();
+        loadCategories();
     }, []);
+
+    // 当分类或排序改变时重新加载
+    useEffect(() => {
+        loadKnowledgeBases();
+    }, [selectedCategory, sortBy]);
 
     // 搜索
     const handleSearch = async () => {
@@ -72,6 +127,21 @@ export default function KnowledgeBase() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // 打开分类编辑对话框
+    const handleOpenCategoryEdit = (kb: KnowledgeBaseItem) => {
+        setCategoryEditDialog({
+            open: true,
+            id: kb.id,
+            name: kb.name,
+            category: kb.category
+        });
+    };
+
+    // 打开详情对话框
+    const handleOpenDetail = (id: number) => {
+        setDetailDialog({ open: true, id });
     };
 
     // 删除知识库
@@ -127,6 +197,15 @@ export default function KnowledgeBase() {
         setUploadDialogOpen(false);
         loadKnowledgeBases();
         loadStats();
+        loadCategories();
+    };
+
+    // 分类编辑成功回调
+    const handleCategoryEditSuccess = () => {
+        setCategoryEditDialog({ open: false, id: 0, name: '', category: null });
+        loadKnowledgeBases();
+        loadStats();
+        loadCategories();
     };
 
     // 格式化文件大小
@@ -232,32 +311,73 @@ export default function KnowledgeBase() {
 
             {/* 操作栏 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex gap-2 flex-1">
-                        <Input
-                            placeholder="搜索知识库..."
-                            value={searchKeyword}
-                            onChange={(e) => setSearchKeyword(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            className="max-w-md"
-                        />
-                        <Button onClick={handleSearch} variant="outline">
-                            <Search className="w-4 h-4" />
-                        </Button>
+                <div className="space-y-4">
+                    {/* 第一行：搜索和操作按钮 */}
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex gap-2 flex-1">
+                            <Input
+                                placeholder="搜索知识库..."
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                className="max-w-md"
+                            />
+                            <Button onClick={handleSearch} variant="outline">
+                                <Search className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button onClick={loadKnowledgeBases} variant="outline">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                刷新
+                            </Button>
+                            <Button
+                                onClick={() => setUploadDialogOpen(true)}
+                                className="bg-[#8B4513] hover:bg-[#8B4513]/90"
+                            >
+                                <Upload className="w-4 h-4 mr-2" />
+                                上传知识库
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2">
-                        <Button onClick={loadKnowledgeBases} variant="outline">
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            刷新
-                        </Button>
-                        <Button
-                            onClick={() => setUploadDialogOpen(true)}
-                            className="bg-[#8B4513] hover:bg-[#8B4513]/90"
-                        >
-                            <Upload className="w-4 h-4 mr-2" />
-                            上传知识库
-                        </Button>
+                    {/* 第二行：筛选和排序 */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-gray-600" />
+                            <span className="text-sm text-gray-600">分类筛选:</span>
+                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">全部分类</SelectItem>
+                                    <SelectItem value="uncategorized">未分类</SelectItem>
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {cat}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <SortAsc className="w-4 h-4 text-gray-600" />
+                            <span className="text-sm text-gray-600">排序:</span>
+                            <Select value={sortBy} onValueChange={setSortBy}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="time">按上传时间</SelectItem>
+                                    <SelectItem value="size">按文件大小</SelectItem>
+                                    <SelectItem value="access">按访问次数</SelectItem>
+                                    <SelectItem value="question">按问答次数</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -317,9 +437,19 @@ export default function KnowledgeBase() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#D4AF37]/20 text-[#8B4513]">
-                                                {kb.category || '未分类'}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#D4AF37]/20 text-[#8B4513]">
+                                                    {kb.category || '未分类'}
+                                                </span>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => handleOpenCategoryEdit(kb)}
+                                                    className="h-6 w-6 p-0"
+                                                >
+                                                    <Tag className="w-3 h-3 text-gray-500" />
+                                                </Button>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {formatFileSize(kb.fileSize)}
@@ -336,9 +466,18 @@ export default function KnowledgeBase() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
+                                                    onClick={() => handleOpenDetail(kb.id)}
+                                                    title="查看详情"
+                                                >
+                                                    <Info className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     onClick={() =>
                                                         handleDownload(kb.id, kb.originalFilename)
                                                     }
+                                                    title="下载"
                                                 >
                                                     <Download className="w-4 h-4" />
                                                 </Button>
@@ -347,6 +486,7 @@ export default function KnowledgeBase() {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handleRevectorize(kb.id, kb.name)}
+                                                        title="重新向量化"
                                                     >
                                                         <RefreshCw className="w-4 h-4" />
                                                     </Button>
@@ -356,6 +496,7 @@ export default function KnowledgeBase() {
                                                     variant="outline"
                                                     onClick={() => handleDelete(kb.id, kb.name)}
                                                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    title="删除"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
@@ -374,6 +515,23 @@ export default function KnowledgeBase() {
                 open={uploadDialogOpen}
                 onClose={() => setUploadDialogOpen(false)}
                 onSuccess={handleUploadSuccess}
+            />
+
+            {/* 分类编辑对话框 */}
+            <CategoryEditDialog
+                open={categoryEditDialog.open}
+                onClose={() => setCategoryEditDialog({ open: false, id: 0, name: '', category: null })}
+                onSuccess={handleCategoryEditSuccess}
+                knowledgeBaseId={categoryEditDialog.id}
+                currentCategory={categoryEditDialog.category}
+                knowledgeBaseName={categoryEditDialog.name}
+            />
+
+            {/* 详情对话框 */}
+            <KnowledgeBaseDetailDialog
+                open={detailDialog.open}
+                onClose={() => setDetailDialog({ open: false, id: 0 })}
+                knowledgeBaseId={detailDialog.id}
             />
         </div>
     );

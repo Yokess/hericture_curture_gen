@@ -60,14 +60,22 @@ public class RagChatSessionService {
 
         log.info("创建 RAG 聊天会话: id={}, title={}", session.getId(), session.getTitle());
 
-        return null;
+        return new SessionDTO(
+            session.getId(),
+            session.getTitle(),
+            session.getKnowledgeBaseIds(),
+            session.getCreatedAt()
+        );
     }
 
     /**
      * 获取会话列表
      */
     public List<SessionListItemDTO> listSessions() {
-        return null;
+        List<RagChatSessionEntity> sessions = sessionRepository.findAllOrderByPinnedAndUpdatedAtDesc();
+        return sessions.stream()
+            .map(this::toSessionListItemDTO)
+            .toList();
     }
 
     /**
@@ -76,7 +84,13 @@ public class RagChatSessionService {
      */
     public SessionDetailDTO getSessionDetail(Long sessionId) {
         // 先加载会话和知识库
-        return null;
+        RagChatSessionEntity session = sessionRepository.findByIdWithMessagesAndKnowledgeBases(sessionId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "会话不存在"));
+
+        // 再加载消息
+        List<RagChatMessageEntity> messages = messageRepository.findBySessionIdOrderByMessageOrderAsc(sessionId);
+
+        return toSessionDetailDTO(session, messages);
     }
 
     /**
@@ -216,5 +230,80 @@ public class RagChatSessionService {
             return knowledgeBases.getFirst().getName();
         }
         return knowledgeBases.size() + " 个知识库对话";
+    }
+
+    /**
+     * 转换会话实体为列表项DTO
+     */
+    private SessionListItemDTO toSessionListItemDTO(RagChatSessionEntity session) {
+        List<String> kbNames = session.getKnowledgeBases().stream()
+            .map(KnowledgeBaseEntity::getName)
+            .toList();
+
+        return new SessionListItemDTO(
+            session.getId(),
+            session.getTitle(),
+            session.getMessageCount(),
+            kbNames,
+            session.getUpdatedAt(),
+            session.getIsPinned()
+        );
+    }
+
+    /**
+     * 转换会话实体和消息列表为详情DTO
+     */
+    private SessionDetailDTO toSessionDetailDTO(RagChatSessionEntity session, List<RagChatMessageEntity> messages) {
+        // 转换知识库列表
+        List<heritage.gen.modules.knowledgebase.model.KnowledgeBaseListItemDTO> kbDTOs = session.getKnowledgeBases().stream()
+            .map(this::toKnowledgeBaseDTO)
+            .toList();
+
+        // 转换消息列表
+        List<heritage.gen.modules.knowledgebase.model.RagChatDTO.MessageDTO> messageDTOs = messages.stream()
+            .map(this::toMessageDTO)
+            .toList();
+
+        return new SessionDetailDTO(
+            session.getId(),
+            session.getTitle(),
+            kbDTOs,
+            messageDTOs,
+            session.getCreatedAt(),
+            session.getUpdatedAt()
+        );
+    }
+
+    /**
+     * 转换消息实体为DTO
+     */
+    private heritage.gen.modules.knowledgebase.model.RagChatDTO.MessageDTO toMessageDTO(RagChatMessageEntity message) {
+        return new heritage.gen.modules.knowledgebase.model.RagChatDTO.MessageDTO(
+            message.getId(),
+            message.getTypeString(),
+            message.getContent(),
+            message.getCreatedAt()
+        );
+    }
+
+    /**
+     * 转换知识库实体为DTO
+     */
+    private heritage.gen.modules.knowledgebase.model.KnowledgeBaseListItemDTO toKnowledgeBaseDTO(KnowledgeBaseEntity entity) {
+        return new heritage.gen.modules.knowledgebase.model.KnowledgeBaseListItemDTO(
+            entity.getId(),
+            entity.getName(),
+            entity.getCategory(),
+            entity.getOriginalFilename(),
+            entity.getFileSize(),
+            entity.getContentType(),
+            entity.getUploadedAt(),
+            entity.getLastAccessedAt(),
+            entity.getAccessCount(),
+            entity.getQuestionCount(),
+            entity.getVectorStatus(),
+            entity.getVectorError(),
+            entity.getChunkCount()
+        );
     }
 }

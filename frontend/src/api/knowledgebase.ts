@@ -28,11 +28,19 @@ export interface KnowledgeBaseStats {
 const BASE_URL = '/api/knowledgebase';
 
 export const knowledgebaseApi = {
-    // 获取知识库列表
-    listKnowledgeBases: async (): Promise<KnowledgeBaseItem[]> => {
-        const response = await axios.get(`${BASE_URL}/list`);
+    // 获取知识库列表（支持排序）
+    listKnowledgeBases: async (sortBy?: string): Promise<KnowledgeBaseItem[]> => {
+        const response = await axios.get(`${BASE_URL}/list`, {
+            params: sortBy ? { sortBy } : {}
+        });
         // 适配后端返回的 Result 结构
         return response.data.data || [];
+    },
+
+    // 获取知识库详情
+    getKnowledgeBase: async (id: number): Promise<KnowledgeBaseItem> => {
+        const response = await axios.get(`${BASE_URL}/${id}`);
+        return response.data.data;
     },
 
     // 搜索知识库
@@ -80,5 +88,30 @@ export const knowledgebaseApi = {
     // 重新向量化
     revectorize: async (id: number): Promise<void> => {
         await axios.post(`${BASE_URL}/${id}/revectorize`);
+    },
+
+    // ========== 分类管理 API ==========
+
+    // 获取所有分类
+    getAllCategories: async (): Promise<string[]> => {
+        const response = await axios.get(`${BASE_URL}/categories`);
+        return response.data.data || [];
+    },
+
+    // 根据分类获取知识库列表
+    getByCategory: async (category: string): Promise<KnowledgeBaseItem[]> => {
+        const response = await axios.get(`${BASE_URL}/category/${encodeURIComponent(category)}`);
+        return response.data.data || [];
+    },
+
+    // 获取未分类的知识库
+    getUncategorized: async (): Promise<KnowledgeBaseItem[]> => {
+        const response = await axios.get(`${BASE_URL}/uncategorized`);
+        return response.data.data || [];
+    },
+
+    // 更新知识库分类
+    updateCategory: async (id: number, category: string | null): Promise<void> => {
+        await axios.put(`${BASE_URL}/${id}/category`, { category });
     }
 };

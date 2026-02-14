@@ -36,14 +36,18 @@ public class KnowledgeBaseListService {
      * 获取所有知识库列表
      */
     public List<KnowledgeBaseListItemDTO> listKnowledgeBases() {
-        return Collections.emptyList();
+        List<KnowledgeBaseEntity> entities = knowledgeBaseRepository.findAllByOrderByUploadedAtDesc();
+        return entities.stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     /**
      * 根据ID获取知识库详情
      */
     public Optional<KnowledgeBaseListItemDTO> getKnowledgeBase(Long id) {
-        return null;
+        return knowledgeBaseRepository.findById(id)
+            .map(this::toDTO);
     }
 
     /**
@@ -83,8 +87,9 @@ public class KnowledgeBaseListService {
         } else {
             entities = knowledgeBaseRepository.findByCategoryOrderByUploadedAtDesc(category);
         }
-        return Collections.emptyList();
-
+        return entities.stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     /**
@@ -108,7 +113,17 @@ public class KnowledgeBaseListService {
         if (keyword == null || keyword.isBlank()) {
             return listKnowledgeBases();
         }
-        return listKnowledgeBases();
+        // 搜索名称或原始文件名包含关键词的知识库
+        List<KnowledgeBaseEntity> entities = knowledgeBaseRepository.findAll().stream()
+            .filter(entity ->
+                entity.getName().toLowerCase().contains(keyword.toLowerCase()) ||
+                entity.getOriginalFilename().toLowerCase().contains(keyword.toLowerCase()) ||
+                (entity.getCategory() != null && entity.getCategory().toLowerCase().contains(keyword.toLowerCase()))
+            )
+            .toList();
+        return entities.stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     // ========== 排序功能 ==========
@@ -124,7 +139,9 @@ public class KnowledgeBaseListService {
             case "question" -> entities = knowledgeBaseRepository.findAllByOrderByQuestionCountDesc();
             default -> entities = knowledgeBaseRepository.findAllByOrderByUploadedAtDesc();
         }
-        return Collections.emptyList();
+        return entities.stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     // ========== 统计功能 ==========
@@ -167,6 +184,29 @@ public class KnowledgeBaseListService {
     public KnowledgeBaseEntity getEntityForDownload(Long id) {
         return knowledgeBaseRepository.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.KNOWLEDGE_BASE_NOT_FOUND, "知识库不存在"));
+    }
+
+    // ========== 辅助方法 ==========
+
+    /**
+     * 将实体转换为DTO
+     */
+    private KnowledgeBaseListItemDTO toDTO(KnowledgeBaseEntity entity) {
+        return new KnowledgeBaseListItemDTO(
+            entity.getId(),
+            entity.getName(),
+            entity.getCategory(),
+            entity.getOriginalFilename(),
+            entity.getFileSize(),
+            entity.getContentType(),
+            entity.getUploadedAt(),
+            entity.getLastAccessedAt(),
+            entity.getAccessCount(),
+            entity.getQuestionCount(),
+            entity.getVectorStatus(),
+            entity.getVectorError(),
+            entity.getChunkCount()
+        );
     }
 }
 
