@@ -33,34 +33,51 @@ public class KnowledgeBaseVectorService {
     
     /**
      * 将知识库内容向量化并存储
-     * 
+     *
      * @param knowledgeBaseId 知识库ID
      * @param content 知识库文本内容
      */
     @Transactional
     public void vectorizeAndStore(Long knowledgeBaseId, String content) {
         log.info("开始向量化知识库: kbId={}, contentLength={}", knowledgeBaseId, content.length());
-        
+
         try {
             // 1. 先删除该知识库的旧向量数据
             deleteByKnowledgeBaseId(knowledgeBaseId);
-            
+
             // 2. 将文本分块
             List<Document> chunks = textSplitter.apply(
                 List.of(new Document(content))
             );
-            
+
             log.info("文本分块完成: {} 个chunks", chunks.size());
-            
+
             // 3. 为每个chunk添加metadata（知识库ID）
             // 统一使用 String 类型存储，确保查询一致性
             chunks.forEach(chunk -> chunk.getMetadata().put("kb_id", knowledgeBaseId.toString()));
-            
-            // 4. 向量化并存储
-            vectorStore.add(chunks);
-            
-            log.info("知识库向量化完成: kbId={}, chunks={}", knowledgeBaseId, chunks.size());
-            
+
+            // 4. 向量化并存储（分批处理，每批最多10个，避免超过API限制）
+            int batchSize = 10;
+            int totalChunks = chunks.size();
+            int processedChunks = 0;
+
+            for (int i = 0; i < totalChunks; i += batchSize) {
+                int endIndex = Math.min(i + batchSize, totalChunks);
+                List<Document> batch = chunks.subList(i, endIndex);
+
+                log.info("处理批次 {}/{}: 向量化 {} 个chunks",
+                    (i / batchSize + 1),
+                    (totalChunks + batchSize - 1) / batchSize,
+                    batch.size());
+
+                vectorStore.add(batch);
+                processedChunks += batch.size();
+
+                log.debug("已处理 {}/{} 个chunks", processedChunks, totalChunks);
+            }
+
+            log.info("知识库向量化完成: kbId={}, totalChunks={}", knowledgeBaseId, chunks.size());
+
         } catch (Exception e) {
             log.error("向量化知识库失败: kbId={}, error={}", knowledgeBaseId, e.getMessage(), e);
             throw new RuntimeException("向量化知识库失败: " + e.getMessage(), e);
