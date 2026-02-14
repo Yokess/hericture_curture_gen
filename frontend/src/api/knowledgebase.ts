@@ -19,9 +19,10 @@ export interface KnowledgeBaseItem {
 // 统计信息接口
 export interface KnowledgeBaseStats {
     totalCount: number;
-    vectorizedCount: number;
-    totalQuestions: number;
-    categoryCount: number;
+    totalQuestionCount: number;
+    totalAccessCount: number;
+    completedCount: number;
+    processingCount: number;
 }
 
 // API 基础路径

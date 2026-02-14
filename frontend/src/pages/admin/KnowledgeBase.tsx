@@ -280,8 +280,8 @@ export default function KnowledgeBase() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600 mb-1">已向量化</p>
-                                <p className="text-3xl font-bold text-green-600">{stats.vectorizedCount}</p>
+                                <p className="text-sm text-gray-600 mb-1">已完成</p>
+                                <p className="text-3xl font-bold text-green-600">{stats.completedCount}</p>
                             </div>
                             <CheckCircle className="w-12 h-12 text-green-500" />
                         </div>
@@ -291,7 +291,7 @@ export default function KnowledgeBase() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">问答次数</p>
-                                <p className="text-3xl font-bold text-blue-600">{stats.totalQuestions}</p>
+                                <p className="text-3xl font-bold text-blue-600">{stats.totalQuestionCount}</p>
                             </div>
                             <MessageSquare className="w-12 h-12 text-blue-500" />
                         </div>
@@ -300,8 +300,8 @@ export default function KnowledgeBase() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600 mb-1">分类数量</p>
-                                <p className="text-3xl font-bold text-purple-600">{stats.categoryCount}</p>
+                                <p className="text-sm text-gray-600 mb-1">处理中</p>
+                                <p className="text-3xl font-bold text-purple-600">{stats.processingCount}</p>
                             </div>
                             <FolderOpen className="w-12 h-12 text-purple-500" />
                         </div>
