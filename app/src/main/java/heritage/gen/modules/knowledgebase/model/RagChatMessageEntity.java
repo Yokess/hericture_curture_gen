@@ -67,6 +67,13 @@ public class RagChatMessageEntity {
      */
     private Boolean completed = true;
 
+    /**
+     * 引用的知识库ID列表（JSON格式存储，仅 ASSISTANT 消息使用）
+     * 存储实际检索到的文档所属的知识库ID
+     */
+    @Column(columnDefinition = "TEXT")
+    private String sourceKnowledgeBaseIds;
+
     public enum MessageType {
         USER,      // 用户消息
         ASSISTANT  // AI 回答

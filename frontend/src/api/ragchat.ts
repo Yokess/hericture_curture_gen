@@ -2,6 +2,33 @@ import axios from 'axios';
 
 const BASE_URL = '/api/rag-chat';
 
+// ========== 辅助函数 ==========
+
+/**
+ * 模拟打字机效果
+ * 将大块文本分割成小块逐个发送，提供更好的用户体验
+ */
+const simulateTypingEffect = async (
+    text: string,
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
+) => {
+    const chunkSize = 5; // 每次显示5个字符
+    const delay = 20; // 每次延迟20ms
+
+    for (let i = 0; i < text.length; i += chunkSize) {
+        if (signal?.aborted) break;
+
+        const chunk = text.substring(i, i + chunkSize);
+        onChunk(chunk);
+
+        // 最后一块不需要延迟
+        if (i + chunkSize < text.length) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+};
+
 // ========== 类型定义 ==========
 
 export interface CreateSessionRequest {
@@ -34,6 +61,8 @@ export interface MessageDTO {
     type: 'user' | 'assistant';
     content: string;
     createdAt: string;
+    // ✅ 新增：来源知识库ID列表（可选，因为 user 消息通常没有）
+    sourceKnowledgeBaseIds?: number[];
 }
 
 export interface KnowledgeBaseListItemDTO {
@@ -188,7 +217,13 @@ export const ragChatApi = {
                         if (data.trim()) {
                             // 解析转义的换行符
                             const chunk = data.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
-                            onChunk(chunk);
+
+                            // 如果是大块内容（>100字符），模拟打字机效果
+                            if (chunk.length > 100) {
+                                simulateTypingEffect(chunk, onChunk, abortController.signal);
+                            } else {
+                                onChunk(chunk);
+                            }
                         }
                     }
                 }

@@ -257,6 +257,15 @@ export function QASection() {
     const renderMessage = (message: MessageDTO) => {
         const isUser = message.type === 'user';
 
+        // 1. 获取该条消息实际引用的知识库 ID 列表 (后端返回的字段)
+        // 如果字段不存在(旧数据)或为空，给一个空数组
+        const sourceIds = message.sourceKnowledgeBaseIds || [];
+
+        // 2. 根据 ID 从会话的全量知识库中筛选出具体的知识库对象
+        const relatedKbs = currentSession?.knowledgeBases.filter(kb =>
+            sourceIds.includes(kb.id)
+        ) || [];
+
         return (
             <div key={message.id} className={`flex items-start space-x-4 ${isUser ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -276,14 +285,16 @@ export function QASection() {
                             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
                             {/* AI回答显示知识来源 */}
-                            {!isUser && currentSession && currentSession.knowledgeBases.length > 0 && (
+                            {/* 修正判定条件：!isUser (是AI) 且 relatedKbs 有值时才显示 */}
+                            {!isUser && relatedKbs.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                     <div className="flex items-center space-x-2 mb-3">
                                         <Book className="w-4 h-4 text-[#8B4513]" />
                                         <span className="text-sm font-semibold text-[#8B4513]">知识来源</span>
                                     </div>
                                     <div className="space-y-2">
-                                        {currentSession.knowledgeBases.slice(0, 3).map((kb) => (
+                                        {/* 这里遍历 relatedKbs (实际引用) 而不是 currentSession.knowledgeBases */}
+                                        {relatedKbs.map((kb) => (
                                             <div
                                                 key={kb.id}
                                                 className="block bg-[#F5F5DC] rounded-lg p-3 hover:bg-[#D4AF37]/10 transition-colors duration-200"
@@ -308,11 +319,6 @@ export function QASection() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {currentSession.knowledgeBases.length > 3 && (
-                                            <p className="text-xs text-gray-500 text-center">
-                                                +{currentSession.knowledgeBases.length - 3} 个知识库
-                                            </p>
-                                        )}
                                     </div>
                                 </div>
                             )}

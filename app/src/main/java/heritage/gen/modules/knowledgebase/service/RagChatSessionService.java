@@ -18,8 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Arrays;
 
 /**
  * RAG 聊天会话服务
@@ -137,15 +140,25 @@ public class RagChatSessionService {
      * 流式响应完成后更新消息
      */
     @Transactional
-    public void completeStreamMessage(Long messageId, String content) {
+    public void completeStreamMessage(Long messageId, String content, List<Long> sourceKnowledgeBaseIds) {
         RagChatMessageEntity message = messageRepository.findById(messageId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "消息不存在"));
 
         message.setContent(content);
         message.setCompleted(true);
+
+        // 保存来源知识库ID列表（JSON格式）
+        if (sourceKnowledgeBaseIds != null && !sourceKnowledgeBaseIds.isEmpty()) {
+            String json = sourceKnowledgeBaseIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(",", "[", "]"));
+            message.setSourceKnowledgeBaseIds(json);
+        }
+
         messageRepository.save(message);
 
-        log.info("完成流式消息: messageId={}, contentLength={}", messageId, content.length());
+        log.info("完成流式消息: messageId={}, contentLength={}, sourceKbIds={}",
+            messageId, content.length(), sourceKnowledgeBaseIds);
     }
 
     /**
@@ -278,11 +291,32 @@ public class RagChatSessionService {
      * 转换消息实体为DTO
      */
     private heritage.gen.modules.knowledgebase.model.RagChatDTO.MessageDTO toMessageDTO(RagChatMessageEntity message) {
+        // 解析来源知识库ID列表（JSON格式）
+        List<Long> sourceKbIds = new ArrayList<>();
+        if (message.getSourceKnowledgeBaseIds() != null && !message.getSourceKnowledgeBaseIds().isBlank()) {
+            try {
+                // 简单的JSON数组解析：[1,2,3] -> List<Long>
+                String json = message.getSourceKnowledgeBaseIds().trim();
+                if (json.startsWith("[") && json.endsWith("]")) {
+                    String content = json.substring(1, json.length() - 1);
+                    if (!content.isBlank()) {
+                        sourceKbIds = Arrays.stream(content.split(","))
+                            .map(String::trim)
+                            .map(Long::parseLong)
+                            .collect(Collectors.toList());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("解析消息来源知识库ID失败: messageId={}, json={}", message.getId(), message.getSourceKnowledgeBaseIds(), e);
+            }
+        }
+
         return new heritage.gen.modules.knowledgebase.model.RagChatDTO.MessageDTO(
             message.getId(),
             message.getTypeString(),
             message.getContent(),
-            message.getCreatedAt()
+            message.getCreatedAt(),
+            sourceKbIds
         );
     }
 

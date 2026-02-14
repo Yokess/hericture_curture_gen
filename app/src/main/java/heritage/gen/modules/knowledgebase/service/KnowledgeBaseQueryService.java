@@ -4,6 +4,7 @@ import heritage.gen.common.exception.BusinessException;
 import heritage.gen.common.exception.ErrorCode;
 import heritage.gen.modules.knowledgebase.model.QueryRequest;
 import heritage.gen.modules.knowledgebase.model.QueryResponse;
+import heritage.gen.modules.knowledgebase.tool.HeritageDataTool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -32,20 +34,29 @@ public class KnowledgeBaseQueryService {
     private final KnowledgeBaseVectorService vectorService;
     private final KnowledgeBaseListService listService;
     private final KnowledgeBaseCountService countService;
+    private final HeritageDataTool heritageDataTool;
     private final PromptTemplate systemPromptTemplate;
     private final PromptTemplate userPromptTemplate;
+
+    /**
+     * ThreadLocal 用于存储当前查询的来源知识库ID列表
+     * 在 answerQuestionStream 中设置，在 Controller 中获取后清除
+     */
+    public static final ThreadLocal<List<Long>> SOURCE_KB_IDS = new ThreadLocal<>();
 
     public KnowledgeBaseQueryService(
             ChatClient.Builder chatClientBuilder,
             KnowledgeBaseVectorService vectorService,
             KnowledgeBaseListService listService,
             KnowledgeBaseCountService countService,
+            HeritageDataTool heritageDataTool,
             @Value("classpath:prompts/knowledgebase-query-system.st") Resource systemPromptResource,
             @Value("classpath:prompts/knowledgebase-query-user.st") Resource userPromptResource) throws IOException {
         this.chatClient = chatClientBuilder.build();
         this.vectorService = vectorService;
         this.listService = listService;
         this.countService = countService;
+        this.heritageDataTool = heritageDataTool;
         this.systemPromptTemplate = new PromptTemplate(systemPromptResource.getContentAsString(StandardCharsets.UTF_8));
         this.userPromptTemplate = new PromptTemplate(userPromptResource.getContentAsString(StandardCharsets.UTF_8));
     }
@@ -163,7 +174,19 @@ public class KnowledgeBaseQueryService {
                 return Flux.just("抱歉，在选定的知识库中没有找到相关信息。请尝试调整问题或选择其他知识库。");
             }
 
-            // 3. 构建上下文
+            // 3. 提取实际检索到的文档所属的知识库ID（去重）
+            List<Long> sourceKbIds = relevantDocs.stream()
+                    .map(doc -> doc.getMetadata().get("kb_id"))
+                    .filter(Objects::nonNull)
+                    .map(kbId -> kbId instanceof Long ? (Long) kbId : Long.parseLong(kbId.toString()))
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 存储到 ThreadLocal 供 Controller 使用
+            SOURCE_KB_IDS.set(sourceKbIds);
+            log.debug("检索到的文档来源知识库: {}", sourceKbIds);
+
+            // 4. 构建上下文
             String context = relevantDocs.stream()
                     .map(Document::getText)
                     .collect(Collectors.joining("\n\n---\n\n"));
@@ -174,21 +197,22 @@ public class KnowledgeBaseQueryService {
             String systemPrompt = buildSystemPrompt();
             String userPrompt = buildUserPrompt(context, question, knowledgeBaseIds);
 
-            // 5. 流式调用AI生成回答
-            Flux<String> responseFlux = chatClient.prompt()
+
+            // 5. 调用AI生成回答（注册工具）
+            // 注意：由于 Spring AI 2.0.0-M1 在 streaming 模式下处理 Qwen 模型的 tool calling 有 bug
+            // （toolName 在后续 chunk 中为空，导致 IllegalArgumentException），暂时使用非流式调用
+            log.info("开始调用AI生成回答: kbIds={}", knowledgeBaseIds);
+
+            String fullAnswer = chatClient.prompt()
                     .system(systemPrompt)
                     .user(userPrompt)
-                    .stream()
+                    .tools(heritageDataTool)  // ✅ 传递工具实例
+                    .call()
                     .content();
+            log.info("完成知识库回答: kbIds={}, answerLength={}", knowledgeBaseIds, fullAnswer.length());
 
-            log.info("开始流式输出知识库回答: kbIds={}", knowledgeBaseIds);
-
-            return responseFlux
-                    .doOnComplete(() -> log.info("流式输出完成: kbIds={}", knowledgeBaseIds))
-                    .onErrorResume(e -> {
-                        log.error("流式输出失败: kbIds={}, error={}", knowledgeBaseIds, e.getMessage(), e);
-                        return Flux.just("【错误】知识库查询失败：AI服务暂时不可用，请稍后重试。");
-                    });
+            // 将完整回答包装成 Flux 以兼容 SSE 接口
+            return Flux.just(fullAnswer);
 
         } catch (Exception e) {
             log.error("知识库流式问答失败: {}", e.getMessage(), e);

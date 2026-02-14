@@ -2,6 +2,7 @@ package heritage.gen.modules.knowledgebase;
 
 import heritage.gen.common.result.Result;
 import heritage.gen.modules.knowledgebase.model.RagChatDTO.*;
+import heritage.gen.modules.knowledgebase.service.KnowledgeBaseQueryService;
 import heritage.gen.modules.knowledgebase.service.RagChatSessionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.List;
 public class RagChatController {
 
     private final RagChatSessionService sessionService;
+    private final KnowledgeBaseQueryService queryService;  // 新增注入，用于访问 ThreadLocal
 
     /**
      * 创建新会话
@@ -41,7 +43,6 @@ public class RagChatController {
 
     /**
      * 获取会话详情（包含消息历史）
-     * GET /api/rag-chat/sessions/{sessionId}
      */
     @GetMapping("/api/rag-chat/sessions/{sessionId}")
     public Result<SessionDetailDTO> getSessionDetail(@PathVariable Long sessionId) {
@@ -61,7 +62,6 @@ public class RagChatController {
 
     /**
      * 切换会话置顶状态
-     * PUT /api/rag-chat/sessions/{sessionId}/pin
      */
     @PutMapping("/api/rag-chat/sessions/{sessionId}/pin")
     public Result<Void> togglePin(@PathVariable Long sessionId) {
@@ -82,7 +82,6 @@ public class RagChatController {
 
     /**
      * 删除会话
-     * DELETE /api/rag-chat/sessions/{sessionId}
      */
     @DeleteMapping("/api/rag-chat/sessions/{sessionId}")
     public Result<Void> deleteSession(@PathVariable Long sessionId) {
@@ -91,11 +90,11 @@ public class RagChatController {
     }
 
     /**
-     * 发送消息（流式SSE）
+     * 发送消息（流式 SSE）
      * 流式响应设计：
      * 1. 先同步保存用户消息和创建 AI 消息占位
      * 2. 返回流式响应
-     * 3. 流式完成后通过回调更新消息
+     * 3. 流式完成后通过回调更新消息，并保存实际检索到的知识库来源
      */
     @PostMapping(value = "/api/rag-chat/sessions/{sessionId}/messages/stream",
                  produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -112,23 +111,42 @@ public class RagChatController {
         StringBuilder fullContent = new StringBuilder();
 
         return sessionService.getStreamAnswer(sessionId, request.question())
-            .doOnNext(fullContent::append)
-            // 使用 ServerSentEvent 包装，转义换行符避免破坏 SSE 格式
-            .map(chunk -> ServerSentEvent.<String>builder()
-                .data(chunk.replace("\n", "\\n").replace("\r", "\\r"))
-                .build())
-            .doOnComplete(() -> {
-                // 3. 流式完成后更新消息内容
-                sessionService.completeStreamMessage(messageId, fullContent.toString());
-                log.info("RAG 聊天流式完成: sessionId={}, messageId={}", sessionId, messageId);
-            })
-            .doOnError(e -> {
-                // 错误时也保存已接收的内容
-                String content = !fullContent.isEmpty()
-                    ? fullContent.toString()
-                    : "【错误】回答生成失败：" + e.getMessage();
-                sessionService.completeStreamMessage(messageId, content);
-                log.error("RAG 聊天流式错误: sessionId={}", sessionId, e);
-            });
+                .doOnNext(chunk -> {
+                    fullContent.append(chunk);
+                    // 可选：如果未来恢复逐字 streaming，这里可以做更细粒度的处理
+                })
+                // 使用 ServerSentEvent 包装，转义换行符避免破坏 SSE 格式
+                .map(chunk -> ServerSentEvent.<String>builder()
+                        .data(chunk.replace("\n", "\\n").replace("\r", "\\r"))
+                        .build())
+                .doOnComplete(() -> {
+                    // 3. 流式完成后更新消息内容 + 来源知识库
+                    List<Long> sourceKbIds = KnowledgeBaseQueryService.SOURCE_KB_IDS.get();
+                    String finalContent = fullContent.toString();
+
+                    sessionService.completeStreamMessage(messageId, finalContent, sourceKbIds);
+
+                    // 清理 ThreadLocal，防止线程复用污染
+                    KnowledgeBaseQueryService.SOURCE_KB_IDS.remove();
+
+                    log.info("RAG 聊天流式完成: sessionId={}, messageId={}, sourceKbIds={}",
+                            sessionId, messageId, sourceKbIds);
+                })
+                .doOnError(e -> {
+                    // 错误时也尽量保存已接收的内容和来源（如果有）
+                    String content = !fullContent.isEmpty()
+                            ? fullContent.toString()
+                            : "【错误】回答生成失败：" + e.getMessage();
+
+                    List<Long> sourceKbIds = KnowledgeBaseQueryService.SOURCE_KB_IDS.get();
+
+                    sessionService.completeStreamMessage(messageId, content, sourceKbIds);
+
+                    // 同样清理
+                    KnowledgeBaseQueryService.SOURCE_KB_IDS.remove();
+
+                    log.error("RAG 聊天流式错误: sessionId={}, messageId={}, sourceKbIds={}",
+                            sessionId, messageId, sourceKbIds, e);
+                });
     }
 }

@@ -90,6 +90,7 @@ public class RagChatDTO {
         Long id,
         String type,  // "user" | "assistant"
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<Long> sourceKnowledgeBaseIds  // 引用的知识库ID列表（仅 assistant 消息）
     ) {}
 }
