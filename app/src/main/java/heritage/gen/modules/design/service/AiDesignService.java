@@ -15,7 +15,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +74,9 @@ public class AiDesignService {
 
             String projectId = UUID.randomUUID().toString();
             // 仅返回概念，图片字段为 null
-            return new DesignProject(projectId, concept, null, null);
+            DesignProject project = new DesignProject(projectId, concept, null, null);
+            project.syncFromConcept();
+            return project;
 
         } catch (Exception e) {
             log.error("生成设计概念失败", e);
@@ -85,7 +90,11 @@ public class AiDesignService {
     public String generateBlueprintOnly(GenerateDesignRequest request) {
         log.info("开始生成草图: conceptName={}", request.getConcept().getConceptName());
         try {
-            return generateBlueprint(request.getConcept());
+            String blueprintUrl = generateBlueprint(request.getConcept());
+            // 转存到MinIO
+            String storedUrl = getShortRefUrl(blueprintUrl);
+            log.info("草图已转存到MinIO: {}", storedUrl);
+            return storedUrl;
         } catch (Exception e) {
             log.error("生成草图失败", e);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "草图生成失败: " + e.getMessage());
@@ -100,7 +109,11 @@ public class AiDesignService {
                 request.getConcept().getConceptName(), request.getBlueprintUrl());
         try {
             // 如果提供了草图 URL，则使用图生图模式
-            return generateProductShot(request.getConcept(), request.getBlueprintUrl());
+            String renderUrl = generateProductShot(request.getConcept(), request.getBlueprintUrl());
+            // 转存到MinIO
+            String storedUrl = getShortRefUrl(renderUrl);
+            log.info("效果图已转存到MinIO: {}", storedUrl);
+            return storedUrl;
         } catch (Exception e) {
             log.error("生成效果图失败", e);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "效果图生成失败: " + e.getMessage());
@@ -194,15 +207,45 @@ public class AiDesignService {
     }
 
     /**
+     * 从MinIO URL下载图片到临时文件，供DashScope图生图使用
+     */
+    private String downloadMinioImageToTemp(String minioUrl) {
+        if (minioUrl == null || minioUrl.isBlank()) {
+            return null;
+        }
+
+        try {
+            log.info("从MinIO下载参考图: {}", minioUrl);
+            Path tempFile = Files.createTempFile("minio_ref_", ".png");
+            try (var in = URI.create(minioUrl).toURL().openStream()) {
+                Files.copy(in, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            String fileUri = tempFile.toUri().toString();
+            log.info("参考图下载成功: {}", fileUri);
+            return fileUri;
+        } catch (Exception e) {
+            log.error("从MinIO下载参考图失败", e);
+            return null;
+        }
+    }
+
+    /**
      * 生成产品效果图 (Product Shot) - 使用 wan2.6-image 进行图生图
      */
     private String generateProductShot(DesignConcept concept, String blueprintUrl) {
         log.info("正在生成产品效果图 (使用 wan2.6-image 图生图, 参考图: {})...",
                 blueprintUrl != null ? "有" : "无");
 
-        String shortRefUrl = blueprintUrl;
-        if (blueprintUrl != null) {
-            shortRefUrl = getShortRefUrl(blueprintUrl);
+        // 先将草图转存到MinIO（如果是DashScope临时URL）
+        String storedBlueprintUrl = blueprintUrl;
+        if (blueprintUrl != null && blueprintUrl.contains("dashscope")) {
+            storedBlueprintUrl = getShortRefUrl(blueprintUrl);
+        }
+
+        // 下载到临时文件供DashScope使用
+        String tempFileUrl = null;
+        if (storedBlueprintUrl != null) {
+            tempFileUrl = downloadMinioImageToTemp(storedBlueprintUrl);
         }
 
         String prompt = String.format(
@@ -219,7 +262,8 @@ public class AiDesignService {
         String negativePrompt = "模糊，低质量，畸形，蜡像感，AI生成痕迹，文字，水印，构图混乱，卡通风格，手绘风格，草图线条";
 
         // 显式调用 generateImageWithWanxImg2Img 来使用 wan2.6-image
-        return callImageGeneratorWanx(prompt, negativePrompt, shortRefUrl);
+        // 传入临时文件URL供DashScope读取
+        return callImageGeneratorWanx(prompt, negativePrompt, tempFileUrl);
     }
 
     // 用于草图和普通调用（默认 qwen-image-max）

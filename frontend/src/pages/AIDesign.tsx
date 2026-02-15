@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
@@ -19,15 +19,25 @@ import {
     Ruler,
     Hammer,
     Sparkles,
-    MousePointerClick
+    MousePointerClick,
+    FolderOpen,
+    Save,
+    Upload
 } from 'lucide-react';
 import { generateConceptOnly, generateBlueprint, generateRender } from '@/services/geminiService';
+import { designApi } from '@/api/design';
 import { DesignProject } from '@/types/design';
+
+const MOCK_USER_ID = 1;
 
 export default function AIDesign() {
     const [idea, setIdea] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [project, setProject] = useState<DesignProject | null>(null);
+    const [savedDesigns, setSavedDesigns] = useState<DesignProject[]>([]);
+    const [showHistory, setShowHistory] = useState(true);
+    const [currentDesignId, setCurrentDesignId] = useState<number | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
     
     // 流程状态: 'input' | 'concept' | 'blueprint' | 'render'
     const [step, setStep] = useState<'input' | 'concept' | 'blueprint' | 'render'>('input');
@@ -35,6 +45,83 @@ export default function AIDesign() {
     const [blueprintImg, setBlueprintImg] = useState<string | null>(null);
     const [productImg, setProductImg] = useState<string | null>(null);
     const [selectedView, setSelectedView] = useState<number>(0);
+
+    // 加载用户设计历史
+    useEffect(() => {
+        loadUserDesigns();
+    }, []);
+
+    const loadUserDesigns = async () => {
+        try {
+            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            console.log('API响应:', res);
+            const designs = res.data || [];
+            console.log('设计列表:', designs);
+            setSavedDesigns(designs);
+        } catch (err) {
+            console.error('加载设计历史失败:', err);
+        }
+    };
+
+    const handleSaveDesign = async () => {
+        if (!project) return;
+        try {
+            const projectToSave = {
+                ...project,
+                blueprintUrl: blueprintImg || undefined,
+                productShotUrl: productImg || undefined
+            };
+            await designApi.saveDesign({
+                userId: MOCK_USER_ID,
+                project: projectToSave,
+                userIdea: idea
+            });
+            setIsSaved(true);
+            alert('设计已保存到您的作品库');
+            loadUserDesigns();
+        } catch (err) {
+            alert('保存失败，请重试');
+        }
+    };
+
+    const handleLoadDesign = (savedProject: DesignProject) => {
+        setProject(savedProject);
+        setIdea(savedProject.designPhilosophy || '');
+        setBlueprintImg(savedProject.blueprintUrl || null);
+        setProductImg(savedProject.productShotUrl || null);
+        setCurrentDesignId(parseInt(savedProject.id));
+        setStep(savedProject.productShotUrl ? 'render' : savedProject.blueprintUrl ? 'blueprint' : 'concept');
+        setShowHistory(false);
+        setIsSaved(true);
+    };
+
+    const handlePublishDesign = async () => {
+        if (!project || !currentDesignId) {
+            // 先保存再发布
+            if (!isSaved) {
+                await handleSaveDesign();
+            }
+        }
+        
+        if (currentDesignId) {
+            try {
+                await designApi.publishDesign(currentDesignId, MOCK_USER_ID);
+                alert('设计已发布到社区!');
+            } catch (err) {
+                alert('发布失败，请重试');
+            }
+        }
+    };
+
+    const handleNewDesign = () => {
+        setStep('input');
+        setIdea('');
+        setProject(null);
+        setBlueprintImg(null);
+        setProductImg(null);
+        setCurrentDesignId(null);
+        setIsSaved(false);
+    };
 
     // 第一步：生成概念
     const handleGenerateConcept = async () => {
@@ -110,18 +197,74 @@ export default function AIDesign() {
                         <div className="lg:col-span-1">
                             <Card className="p-6 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
                                 {/* AI 助手状态 */}
-                                <div className="flex items-center space-x-3 mb-6">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-[#C41E3A] to-[#D4AF37] rounded-full flex items-center justify-center">
-                                        <Bot className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h2 className="font-serif text-xl font-bold text-[#8B4513]">AI 总设计师</h2>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <span className={`w-2 h-2 rounded-full mr-2 ${isProcessing ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></span>
-                                            {isProcessing ? '思考中...' : '在线'}
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-[#C41E3A] to-[#D4AF37] rounded-full flex items-center justify-center">
+                                            <Bot className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-serif text-xl font-bold text-[#8B4513]">AI 总设计师</h2>
+                                            <div className="flex items-center text-sm text-gray-500">
+                                                <span className={`w-2 h-2 rounded-full mr-2 ${isProcessing ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></span>
+                                                {isProcessing ? '思考中...' : '在线'}
+                                            </div>
                                         </div>
                                     </div>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setShowHistory(!showHistory)}
+                                        className="text-[#8B4513]"
+                                    >
+                                        <FolderOpen className="w-4 h-4 mr-1" />
+                                        {showHistory ? '关闭' : '历史'}
+                                    </Button>
                                 </div>
+
+                                {/* 设计历史面板 */}
+                                {showHistory && savedDesigns.length > 0 && (
+                                    <div className="mb-4 p-3 bg-gradient-to-b from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-sm font-medium text-amber-800">我的设计</h4>
+                                            <Badge variant="outline" className="text-xs">{savedDesigns.length}个</Badge>
+                                        </div>
+                                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                            {savedDesigns.map((design) => (
+                                                <div 
+                                                    key={design.id}
+                                                    onClick={() => handleLoadDesign(design)}
+                                                    className="p-2 bg-white rounded-lg border border-amber-100 cursor-pointer hover:border-amber-400 hover:shadow-sm transition-all flex items-center gap-3"
+                                                >
+                                                    <div className="relative flex-shrink-0">
+                                                        {design.productShotUrl || design.blueprintUrl ? (
+                                                            <img 
+                                                                src={design.productShotUrl || design.blueprintUrl} 
+                                                                alt={design.conceptName}
+                                                                className="w-14 h-14 object-cover rounded-lg border border-gray-200"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSI1NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZTZlNmU2Ij48cGF0aCBkPSJNMTIgMkwyIDIyaDIwbC0xMC0yMHptMCAyNGwyIDJoMjBsLTEtMjB6Ii8+PC9zdmc+';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-14 h-14 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                                                                <Layers className="w-6 h-6 text-gray-400" />
+                                                            </div>
+                                                        )}
+                                                        {design.productShotUrl && (
+                                                            <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-[10px] px-1 rounded">已完成</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-semibold text-amber-900 truncate">{design.conceptName}</div>
+                                                        <div className="text-xs text-amber-700/70 truncate mt-0.5">
+                                                            {design.designPhilosophy?.substring(0, 25) || '暂无描述'}...
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* 输入/展示区 */}
                                 <div className="space-y-6">
@@ -199,13 +342,7 @@ export default function AIDesign() {
                                             <p className="text-green-800 font-medium">设计方案已完成</p>
                                             <Button 
                                                 variant="link" 
-                                                onClick={() => {
-                                                    setStep('input');
-                                                    setIdea('');
-                                                    setProject(null);
-                                                    setBlueprintImg(null);
-                                                    setProductImg(null);
-                                                }}
+                                                onClick={handleNewDesign}
                                                 className="text-green-700 underline mt-1"
                                             >
                                                 开始新设计
@@ -296,11 +433,15 @@ export default function AIDesign() {
                                 {/* 底部操作栏 */}
                                 {productImg && (
                                     <div className="mt-6 flex justify-end space-x-3">
+                                        <Button variant="outline" onClick={handleSaveDesign}>
+                                            <Save className="w-4 h-4 mr-2" /> 
+                                            {isSaved ? '已保存' : '保存设计'}
+                                        </Button>
                                         <Button variant="outline">
                                             <Download className="w-4 h-4 mr-2" /> 导出方案
                                         </Button>
-                                        <Button className="bg-[#8B4513]">
-                                            发布设计
+                                        <Button className="bg-[#8B4513]" onClick={handlePublishDesign}>
+                                            <Upload className="w-4 h-4 mr-2" /> 发布设计
                                         </Button>
                                     </div>
                                 )}

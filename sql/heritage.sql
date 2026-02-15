@@ -74,7 +74,12 @@ CREATE TABLE gen_creative_sessions (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES sys_users(id),
     title VARCHAR(100),              -- "剪纸台灯设计"
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user_idea TEXT,                  -- 用户原始创意
+    heritage_context TEXT,           -- RAG检索的文化背景
+    
+    status VARCHAR(20) DEFAULT 'DRAFT',   -- DRAFT, COMPLETED
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 设计产物表 (核心成果)
@@ -82,20 +87,39 @@ CREATE TABLE gen_artifacts (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES sys_users(id),
     
-    -- AI 生成内容
+    -- 基础信息
     design_name VARCHAR(255),
-    design_concept TEXT,             -- 创意说明书
+    design_concept TEXT,
     
-    -- [修改] 混元可能一次生成多张预览图
-    image_keys TEXT[],                -- 存储 MinIO Object Keys 数组
+    -- [新增] 完整设计概念 JSON (由 LLM 生成的结构化数据)
+    concept_data JSONB,               -- 存储 DesignConcept 完整对象
+    blueprint_url TEXT,               -- 草图URL
+    product_shot_url TEXT,            -- 产品效果图URL
+    
+    -- [修改] 多图支持 (草图/效果图可能有多张)
+    image_urls TEXT[],                -- 所有生成图片URL数组
     selected_index INT DEFAULT 0,     -- 用户选中的主图索引
     
-    -- [新增] 生产环境监控
-    generation_metadata JSONB,        -- 存储 {"model": "Hunyuan-DiT", "cost_ms": 5400, "requestId": "xxx"}
+    -- 会话关联
+    session_id BIGINT REFERENCES gen_creative_sessions(id),
+    
+    -- 状态
+    status VARCHAR(20) DEFAULT 'DRAFT',   -- DRAFT, PUBLISHED
+    view_count INT DEFAULT 0,
+    like_count INT DEFAULT 0,
+    
+    -- 生产环境监控
+    generation_metadata JSONB,        -- 存储 {"model": "qwen-image-max", "cost_ms": 5400, "requestId": "xxx"}
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN DEFAULT FALSE
 );
+
+-- 设计产物索引
+CREATE INDEX idx_artifacts_user ON gen_artifacts(user_id);
+CREATE INDEX idx_artifacts_status ON gen_artifacts(status);
+CREATE INDEX idx_artifacts_created ON gen_artifacts(created_at DESC);
 
 -- 技艺视频档案表
 CREATE TABLE arc_videos (
