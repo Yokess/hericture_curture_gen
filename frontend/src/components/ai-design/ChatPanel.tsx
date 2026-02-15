@@ -40,8 +40,19 @@ export function ChatPanel({
                 ...concept
             };
             setProject(newProject);
-            onProjectGenerated?.(newProject);
+            // 自动将后端返回的 imageUrl (映射为 productShotUrl) 传递给父组件
+            if (concept.productShotUrl && onProjectGenerated) {
+                 // 构造一个完整的 DesignProject 对象
+                 onProjectGenerated({
+                     ...newProject,
+                     productShotUrl: concept.productShotUrl
+                 });
+            } else {
+                 onProjectGenerated?.(newProject);
+            }
+
         } catch (err) {
+            console.error(err);
             alert('翻译创意失败，请重试。');
         } finally {
             setIsTranslating(false);

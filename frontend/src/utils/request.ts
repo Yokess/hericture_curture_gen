@@ -6,7 +6,7 @@ import { tokenStorage } from '@/utils/tokenStorage';
  */
 const axiosInstance: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-    timeout: 30000,
+    timeout: 120000, // 增加到 120 秒 (2分钟)，以适应 AI 图像生成
     headers: {
         'Content-Type': 'application/json',
     },

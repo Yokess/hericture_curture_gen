@@ -3,83 +3,86 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
     Wand2,
-    PenTool,
-    Sparkles,
     Palette,
     Scan,
-    MousePointerClick,
-    Camera,
     Bot,
     Send,
     Download,
     RefreshCcw,
-    Share2
+    Layers,
+    ArrowRight,
+    CheckCircle2,
+    BookOpen,
+    Ruler,
+    Hammer,
+    Sparkles,
+    MousePointerClick
 } from 'lucide-react';
-import { translateToDesignConcept, generateOrEditImage } from '@/services/geminiService';
+import { generateConceptOnly, generateBlueprint, generateRender } from '@/services/geminiService';
 import { DesignProject } from '@/types/design';
 
 export default function AIDesign() {
     const [idea, setIdea] = useState('');
-    const [isTranslating, setIsTranslating] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [project, setProject] = useState<DesignProject | null>(null);
-    const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+    
+    // 流程状态: 'input' | 'concept' | 'blueprint' | 'render'
+    const [step, setStep] = useState<'input' | 'concept' | 'blueprint' | 'render'>('input');
+    
     const [blueprintImg, setBlueprintImg] = useState<string | null>(null);
     const [productImg, setProductImg] = useState<string | null>(null);
     const [selectedView, setSelectedView] = useState<number>(0);
 
-    // 创意翻译
-    const handleTranslate = async () => {
+    // 第一步：生成概念
+    const handleGenerateConcept = async () => {
         if (!idea.trim()) return;
-        setIsTranslating(true);
+        setIsProcessing(true);
         try {
-            const concept = await translateToDesignConcept(idea);
-            const newProject = {
-                id: Date.now().toString(),
-                ...concept
-            };
-            setProject(newProject);
+            const concept = await generateConceptOnly(idea);
+            // concept 中已经包含了后端生成的 id (UUID)，无需再手动生成
+            setProject(concept);
+            setStep('concept');
         } catch (err) {
-            alert('翻译创意失败，请重试。');
+            alert('生成概念失败，请重试。');
         } finally {
-            setIsTranslating(false);
+            setIsProcessing(false);
         }
     };
 
-    // 生成视觉方案
-    const handleGenerateVisuals = async () => {
+    // 第二步：生成草图
+    const handleGenerateBlueprint = async () => {
         if (!project) return;
-        setIsGeneratingImg(true);
-        setBlueprintImg(null);
-        setProductImg(null);
-
+        setIsProcessing(true);
         try {
-            const materialList = project.materials?.map(m => `${m.name} (${m.finish})`).join(', ');
-
-            const blueprintPrompt = `Professional industrial design technical sheet of ${project.conceptName}`;
-            const blueprintUrl = await generateOrEditImage(blueprintPrompt);
-            setBlueprintImg(blueprintUrl);
-
-            const productPrompt = `High-end product photography of ${project.conceptName}`;
-            const productUrl = await generateOrEditImage(productPrompt);
-            setProductImg(productUrl);
-        } catch (err: any) {
-            alert(`生成失败: ${err.message}`);
+            const url = await generateBlueprint(project);
+            setBlueprintImg(url);
+            setStep('blueprint');
+            setSelectedView(0); // 自动切换到草图视图
+        } catch (err) {
+            alert('生成草图失败，请重试。');
         } finally {
-            setIsGeneratingImg(false);
+            setIsProcessing(false);
         }
     };
 
-    const handleDownload = (url: string, filename: string) => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    // 第三步：生成效果图 (图生图)
+    const handleGenerateRender = async () => {
+        if (!project || !blueprintImg) return;
+        setIsProcessing(true);
+        try {
+            // 传入 blueprintUrl 作为参考图
+            const url = await generateRender(project, blueprintImg);
+            setProductImg(url);
+            setStep('render');
+            setSelectedView(1); // 自动切换到效果图视图
+        } catch (err) {
+            alert('生成效果图失败，请重试。');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -93,211 +96,331 @@ export default function AIDesign() {
                         AI 文创设计工作站
                     </h1>
                     <p className="text-xl text-gray-600">
-                        让 AI 总设计师帮您创作非遗文创产品
+                        分步协同创作：概念 → 草图 → 渲染
                     </p>
                 </div>
             </section>
 
-            {/* 主工作区 - 1:2 布局 */}
+            {/* 主工作区 */}
             <section className="pb-20 px-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                        {/* 左侧: 对话引导区 (1/3) */}
+                        {/* 左侧: 对话引导区 */}
                         <div className="lg:col-span-1">
-                            <Card className="p-6 sticky top-24">
-                                {/* AI 头像 */}
+                            <Card className="p-6 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
+                                {/* AI 助手状态 */}
                                 <div className="flex items-center space-x-3 mb-6">
                                     <div className="w-12 h-12 bg-gradient-to-br from-[#C41E3A] to-[#D4AF37] rounded-full flex items-center justify-center">
                                         <Bot className="w-6 h-6 text-white" />
                                     </div>
                                     <div>
                                         <h2 className="font-serif text-xl font-bold text-[#8B4513]">AI 总设计师</h2>
-                                        <p className="text-sm text-gray-500">在线</p>
+                                        <div className="flex items-center text-sm text-gray-500">
+                                            <span className={`w-2 h-2 rounded-full mr-2 ${isProcessing ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></span>
+                                            {isProcessing ? '思考中...' : '在线'}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* 对话历史 */}
-                                <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                                    <div className="bg-[#F5F5DC] rounded-lg p-4">
-                                        <p className="text-gray-700 mb-2">您好!我是 AI 总设计师,我将帮助您创作非遗文创产品。请告诉我:</p>
-                                        <ul className="mt-2 space-y-1 text-gray-700 text-sm">
-                                            <li>• 您想基于哪个非遗项目?</li>
-                                            <li>• 设计什么类型的产品?</li>
-                                            <li>• 期望的风格是什么?</li>
-                                        </ul>
+                                {/* 输入/展示区 */}
+                                <div className="space-y-6">
+                                    {/* 步骤 1: 创意输入 */}
+                                    <div className={`transition-all duration-300 ${step !== 'input' ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">1. 核心创意</label>
+                                        <div className="relative">
+                                            <textarea
+                                                value={idea}
+                                                onChange={(e) => setIdea(e.target.value)}
+                                                placeholder="描述您的创意，例如：一款融合皮影戏元素的机械键盘..."
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#D4AF37] min-h-[100px]"
+                                                disabled={step !== 'input'}
+                                            />
+                                            {step === 'input' && (
+                                                <Button 
+                                                    onClick={handleGenerateConcept}
+                                                    disabled={isProcessing || !idea.trim()}
+                                                    className="absolute bottom-2 right-2 bg-gradient-to-r from-[#8B4513] to-[#D4AF37] btn-sm"
+                                                >
+                                                    生成概念 <ArrowRight className="w-4 h-4 ml-1" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {project && (
-                                        <>
-                                            <div className="bg-blue-50 rounded-lg p-4 ml-8">
-                                                <p className="text-gray-700">{idea}</p>
+                                    {/* 步骤 2: 概念确认 & 生成草图 */}
+                                    {step !== 'input' && project && (
+                                        <div className={`bg-[#F5F5DC] rounded-xl p-4 border border-[#D4AF37]/30 transition-all duration-300 ${step !== 'concept' ? 'opacity-80' : ''}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-[#8B4513]">{project.conceptName}</h3>
+                                                <Badge variant="outline" className="text-[#8B4513] border-[#8B4513]">已生成</Badge>
                                             </div>
-                                            <div className="bg-[#F5F5DC] rounded-lg p-4">
-                                                <p className="text-gray-700">很好!让我为您生成专业的设计方案...</p>
+                                            <p className="text-sm text-gray-600 line-clamp-3 mb-4">{project.designPhilosophy}</p>
+                                            
+                                            {step === 'concept' && (
+                                                <Button 
+                                                    onClick={handleGenerateBlueprint}
+                                                    disabled={isProcessing}
+                                                    className="w-full bg-white border-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+                                                >
+                                                    确认概念并生成草图 <Layers className="w-4 h-4 ml-2" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* 步骤 3: 草图确认 & 生成效果图 */}
+                                    {(step === 'blueprint' || step === 'render') && blueprintImg && (
+                                        <div className={`bg-[#F5F5DC] rounded-xl p-4 border border-[#D4AF37]/30 transition-all duration-300 ${step !== 'blueprint' ? 'opacity-80' : ''}`}>
+                                            <div className="flex items-center mb-4">
+                                                <img src={blueprintImg} alt="草图缩略" className="w-16 h-16 object-cover rounded-lg border border-gray-300 mr-3" />
+                                                <div>
+                                                    <h3 className="font-bold text-[#8B4513]">设计草图</h3>
+                                                    <p className="text-xs text-gray-500">已包含结构与尺寸标注</p>
+                                                </div>
                                             </div>
-                                        </>
+                                            
+                                            {step === 'blueprint' && (
+                                                <Button 
+                                                    onClick={handleGenerateRender}
+                                                    disabled={isProcessing}
+                                                    className="w-full bg-gradient-to-r from-[#C41E3A] to-[#D4AF37] text-white"
+                                                >
+                                                    基于草图渲染效果图 <Palette className="w-4 h-4 ml-2" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* 完成状态 */}
+                                    {step === 'render' && (
+                                        <div className="bg-green-50 rounded-xl p-4 border border-green-200 text-center">
+                                            <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                            <p className="text-green-800 font-medium">设计方案已完成</p>
+                                            <Button 
+                                                variant="link" 
+                                                onClick={() => {
+                                                    setStep('input');
+                                                    setIdea('');
+                                                    setProject(null);
+                                                    setBlueprintImg(null);
+                                                    setProductImg(null);
+                                                }}
+                                                className="text-green-700 underline mt-1"
+                                            >
+                                                开始新设计
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
-
-                                {/* 输入框 */}
-                                <div className="relative mb-4">
-                                    <input
-                                        type="text"
-                                        value={idea}
-                                        onChange={(e) => setIdea(e.target.value)}
-                                        placeholder="输入您的想法..."
-                                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:border-[#D4AF37]"
-                                    />
-                                    <button
-                                        onClick={handleTranslate}
-                                        disabled={isTranslating}
-                                        className="absolute right-2 top-2 p-2 bg-gradient-to-r from-[#8B4513] to-[#D4AF37] text-white rounded-lg hover:shadow-lg transition-all duration-200"
-                                    >
-                                        <Send className="w-5 h-5" />
-                                    </button>
-                                </div>
-
-                                {/* 生成按钮 */}
-                                <Button
-                                    onClick={handleGenerateVisuals}
-                                    disabled={!project || isGeneratingImg}
-                                    className="w-full bg-gradient-to-r from-[#C41E3A] to-[#D4AF37] hover:shadow-lg"
-                                >
-                                    {isGeneratingImg ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                                            生成中...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles className="w-4 h-4 mr-2" />
-                                            生成设计方案
-                                        </>
-                                    )}
-                                </Button>
                             </Card>
                         </div>
 
-                        {/* 右侧: 设计方案展示 (2/3) */}
-                        <div className="lg:col-span-2">
+                        {/* 右侧: 视觉展示区 */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* 上半部分：视觉预览 */}
                             <Card className="p-8">
-                                {/* 头部操作栏 */}
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="font-serif text-2xl font-bold text-[#8B4513]">设计方案</h2>
-                                    <div className="flex items-center space-x-2">
-                                        <Button variant="outline" size="sm" onClick={() => handleGenerateVisuals()}>
-                                            <RefreshCcw className="w-4 h-4 mr-2" />
-                                            重新生成
-                                        </Button>
-                                        <Button size="sm" className="bg-gradient-to-r from-[#8B4513] to-[#D4AF37]">
-                                            <Download className="w-4 h-4 mr-2" />
-                                            导出 PDF
-                                        </Button>
+                                {/* 顶部缩略图栏 */}
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    {/* 草图位 */}
+                                    <div 
+                                        onClick={() => blueprintImg && setSelectedView(0)}
+                                        className={`aspect-square rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all ${
+                                            selectedView === 0 ? 'border-[#8B4513] bg-[#F5F5DC]' : 'border-dashed border-gray-300'
+                                        }`}
+                                    >
+                                        {blueprintImg ? (
+                                            <img src={blueprintImg} className="w-full h-full object-cover rounded-lg" />
+                                        ) : (
+                                            <div className="text-center text-gray-400">
+                                                <Layers className="w-8 h-8 mx-auto mb-1" />
+                                                <span className="text-xs">等待生成草图</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 效果图位 */}
+                                    <div 
+                                        onClick={() => productImg && setSelectedView(1)}
+                                        className={`aspect-square rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all ${
+                                            selectedView === 1 ? 'border-[#8B4513] bg-[#F5F5DC]' : 'border-dashed border-gray-300'
+                                        }`}
+                                    >
+                                        {productImg ? (
+                                            <img src={productImg} className="w-full h-full object-cover rounded-lg" />
+                                        ) : (
+                                            <div className="text-center text-gray-400">
+                                                <Palette className="w-8 h-8 mx-auto mb-1" />
+                                                <span className="text-xs">等待渲染效果</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 细节位 (占位) */}
+                                    <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 opacity-50">
+                                        <div className="text-center text-gray-300">
+                                            <Scan className="w-8 h-8 mx-auto mb-1" />
+                                            <span className="text-xs">细节视图</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {project ? (
-                                    <>
-                                        {/* 缩略图选择 */}
-                                        <div className="grid grid-cols-3 gap-4 mb-4">
-                                            {[0, 1, 2].map((index) => (
-                                                <div
-                                                    key={index}
-                                                    onClick={() => setSelectedView(index)}
-                                                    className={`aspect-square bg-gradient-to-br from-[#F5F5DC] to-[#D4AF37]/20 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 ${selectedView === index ? 'border-2 border-[#D4AF37]' : 'hover:border-2 hover:border-[#D4AF37]'
-                                                        }`}
-                                                >
-                                                    <div className="text-center">
-                                                        <div className="w-16 h-16 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                            <Palette className="w-8 h-8 text-[#8B4513]" />
-                                                        </div>
-                                                        <p className="text-sm text-[#8B4513]">设计草图 {index + 1}</p>
-                                                    </div>
+                                {/* 主预览区 */}
+                                <div className="bg-gray-100 rounded-2xl overflow-hidden relative min-h-[400px] flex items-center justify-center">
+                                    {((selectedView === 0 && blueprintImg) || (selectedView === 1 && productImg)) ? (
+                                        <img 
+                                            src={selectedView === 0 ? blueprintImg! : productImg!} 
+                                            className="w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="text-center p-8">
+                                            {isProcessing ? (
+                                                <div className="space-y-4">
+                                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto" />
+                                                    <p className="text-[#8B4513] animate-pulse">
+                                                        {step === 'input' ? '正在构思概念...' : 
+                                                         step === 'concept' ? '正在绘制工程草图...' : 
+                                                         '正在渲染最终效果图 (图生图)...'}
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="text-gray-400">
+                                                    <Bot className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                                                    <p>请在左侧开始设计流程</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* 底部操作栏 */}
+                                {productImg && (
+                                    <div className="mt-6 flex justify-end space-x-3">
+                                        <Button variant="outline">
+                                            <Download className="w-4 h-4 mr-2" /> 导出方案
+                                        </Button>
+                                        <Button className="bg-[#8B4513]">
+                                            发布设计
+                                        </Button>
+                                    </div>
+                                )}
+                            </Card>
+
+                            {/* 下半部分：详细设计方案 */}
+                            {project && (
+                                <Card className="p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex items-center space-x-2 mb-6 border-b border-gray-100 pb-4">
+                                        <BookOpen className="w-6 h-6 text-[#8B4513]" />
+                                        <h2 className="font-serif text-2xl font-bold text-[#8B4513]">设计白皮书</h2>
+                                    </div>
+
+                                    {/* 文化背景 & 设计理念 */}
+                                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                                                <Sparkles className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                                文化溯源
+                                            </h3>
+                                            <p className="text-gray-600 text-sm leading-relaxed bg-[#F5F5DC]/50 p-4 rounded-lg">
+                                                {project.culturalContext}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                                                <Wand2 className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                                设计哲学
+                                            </h3>
+                                            <p className="text-gray-600 text-sm leading-relaxed bg-[#F5F5DC]/50 p-4 rounded-lg">
+                                                {project.designPhilosophy}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 核心参数：CMF */}
+                                    <div className="mb-8">
+                                        <h3 className="font-bold text-gray-800 mb-4 flex items-center">
+                                            <Palette className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                            CMF 方案 (Color, Material, Finish)
+                                        </h3>
+                                        
+                                        {/* 材质列表 */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                            {project.materials?.map((mat, i) => (
+                                                <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    <div className="text-sm font-bold text-gray-800">{mat.name}</div>
+                                                    <div className="text-xs text-gray-500 mt-1">{mat.finish}</div>
                                                 </div>
                                             ))}
                                         </div>
 
-                                        {/* 主图展示 */}
-                                        <div className="aspect-video bg-gradient-to-br from-[#F5F5DC] to-[#D4AF37]/20 rounded-2xl flex items-center justify-center mb-8">
-                                            {blueprintImg || productImg ? (
-                                                <img
-                                                    src={selectedView === 0 ? blueprintImg || '' : productImg || ''}
-                                                    alt="设计图"
-                                                    className="w-full h-full object-contain rounded-2xl"
-                                                />
-                                            ) : (
-                                                <div className="text-center">
-                                                    <div className="w-24 h-24 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                        <Palette className="w-12 h-12 text-[#8B4513]" />
-                                                    </div>
-                                                    <p className="font-serif text-xl text-[#8B4513]">
-                                                        {isGeneratingImg ? '正在生成设计图...' : `${project.conceptName} - 主视图`}
-                                                    </p>
+                                        {/* 色彩方案 */}
+                                        <div className="flex space-x-4">
+                                            {project.colors?.map((color, i) => (
+                                                <div key={i} className="text-center group">
+                                                    <div 
+                                                        className="w-12 h-12 rounded-full shadow-sm mb-2 border-2 border-white ring-1 ring-gray-200 group-hover:scale-110 transition-transform"
+                                                        style={{ backgroundColor: color.hex }}
+                                                    />
+                                                    <span className="text-xs text-gray-500 block">{color.name}</span>
+                                                    <span className="text-[10px] text-gray-400 block uppercase">{color.hex}</span>
                                                 </div>
-                                            )}
+                                            ))}
                                         </div>
+                                    </div>
 
-                                        {/* 设计说明 */}
-                                        <div className="mb-6">
-                                            <h3 className="font-serif text-xl font-bold text-[#8B4513] mb-3">设计说明</h3>
-                                            <div className="bg-[#F5F5DC] rounded-xl p-6">
-                                                <h4 className="font-semibold text-[#8B4513] mb-2">{project.conceptName}</h4>
-                                                <p className="text-gray-700 leading-relaxed mb-4">
-                                                    {project.culturalContext}
-                                                </p>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                                    <div>
-                                                        <p className="font-semibold text-[#8B4513] mb-1">设计哲学</p>
-                                                        <p className="text-gray-600">{project.designPhilosophy}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-[#8B4513] mb-1">建议材质</p>
-                                                        <p className="text-gray-600">
-                                                            {project.materials?.map(m => m.name).join(', ')}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-[#8B4513] mb-1">尺寸规格</p>
-                                                        <p className="text-gray-600">{project.dimensions || 'N/A'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-[#8B4513] mb-1">生成时间</p>
-                                                        <p className="text-gray-600">5.4 秒</p>
-                                                    </div>
+                                    {/* 规格与交互 */}
+                                    <div className="grid md:grid-cols-2 gap-8 mb-8 border-t border-gray-100 pt-6">
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                                                <Ruler className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                                规格形态
+                                            </h3>
+                                            <div className="space-y-3 text-sm text-gray-600">
+                                                <div className="flex justify-between border-b border-gray-100 pb-2">
+                                                    <span>尺寸</span>
+                                                    <span className="font-medium text-[#8B4513]">{project.dimensions}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block mb-1">外观特征:</span>
+                                                    <p className="bg-gray-50 p-2 rounded text-gray-500 text-xs">
+                                                        {project.formFactor}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* 操作按钮 */}
-                                        <div className="flex items-center justify-between">
-                                            <Button variant="outline" className="border-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white">
-                                                保存草稿
-                                            </Button>
-                                            <Button className="bg-gradient-to-r from-[#8B4513] to-[#D4AF37]">
-                                                发布到社区
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="aspect-video bg-gradient-to-br from-[#F5F5DC] to-[#D4AF37]/20 rounded-2xl flex items-center justify-center">
-                                        <div className="text-center">
-                                            <Palette className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-                                            <h3 className="font-serif text-xl font-bold text-gray-600 mb-2">
-                                                等待设计生成
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                                                <MousePointerClick className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                                交互体验
                                             </h3>
-                                            <p className="text-gray-500">
-                                                在左侧对话框中描述您的设计需求,AI 将为您生成创意方案
+                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                {project.userInteraction}
                                             </p>
                                         </div>
                                     </div>
-                                )}
-                            </Card>
+
+                                    {/* 关键特性 */}
+                                    <div>
+                                        <h3 className="font-bold text-gray-800 mb-3 flex items-center">
+                                            <Hammer className="w-4 h-4 mr-2 text-[#D4AF37]" />
+                                            核心功能点
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {project.keyFeatures?.map((feature, i) => (
+                                                <div key={i} className="flex items-start">
+                                                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                                                    <span className="text-sm text-gray-700">{feature}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
                         </div>
                     </div>
                 </div>
             </section>
-
+            
             <Footer />
         </div>
     );

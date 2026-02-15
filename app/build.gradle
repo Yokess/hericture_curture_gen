@@ -9,6 +9,12 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
 }
 
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${libs.versions.spring.ai.get()}"
+    }
+}
+
 group = 'com.interview'
 version = '0.0.1-SNAPSHOT'
 
@@ -31,19 +37,31 @@ dependencies {
     // Spring AI 2.0 - PostgreSQL Vector Store (pgvector)
     implementation "org.springframework.ai:spring-ai-starter-vector-store-pgvector:${libs.versions.spring.ai.get()}"
 
+    // DashScope Native SDK (for Image Generation) - 排除 slf4j-simple
+    implementation('com.alibaba:dashscope-sdk-java:2.18.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
+
+    // Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     // Apache Tika for document parsing (PDF, DOCX, TXT)
     implementation libs.tika.core
     implementation libs.tika.parsers
 
-    // AWS S3 SDK for RustFS storage
-    implementation "software.amazon.awssdk:s3:${libs.versions.aws.sdk.get()}"
+    // AWS S3 SDK for RustFS storage - 排除 slf4j-simple
+    implementation("software.amazon.awssdk:s3:${libs.versions.aws.sdk.get()}") {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
 
-    // Redisson 4.0 - Redis客户端 (Boot 4.0 compatible)
-    implementation "org.redisson:redisson-spring-boot-starter:${libs.versions.redisson.get()}"
+    // Redisson 4.0 - Redis客户端 (Boot 4.0 compatible) - 排除 slf4j-simple
+    implementation("org.redisson:redisson-spring-boot-starter:${libs.versions.redisson.get()}") {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
 
     // Sa-Token 认证授权框架（核心包）
     implementation "cn.dev33:sa-token-spring-boot3-starter:${libs.versions.saToken.get()}"
-    
+
     // BCrypt 密码加密（Spring Security Crypto）
     implementation 'org.springframework.security:spring-security-crypto:6.4.2'
 
@@ -64,6 +82,16 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation libs.junit.jupiter
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 全局强制排除 slf4j-simple（双保险）
+configurations.all {
+    resolutionStrategy {
+        // 统一 SLF4J API 版本（可选，但推荐）
+        force 'org.slf4j:slf4j-api:2.0.17'
+        // 全局排除 slf4j-simple（防止其他隐蔽依赖引入）
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
 }
 
 java {

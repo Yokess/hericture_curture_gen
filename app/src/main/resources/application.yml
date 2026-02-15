@@ -70,6 +70,10 @@ spring:
         initialize-schema: true # 开发环境设置为 true，方便快速启动。生产环境设置为 false，手动管理数据库 schema，避免意外变更。
         remove-existing-vector-store-table: false  # 保留现有表和数据
 
+# DashScope API Key (用于原生 SDK 图像生成)
+dashscope:
+  api-key: sk-9a99983cd44f446d90e8ad03666544bf
+
 # Application custom configuration
 app:
   # 对象存储配置（MinIO/S3兼容）

@@ -92,6 +92,71 @@ public class FileStorageService {
         }
     }
 
+     /**
+     * 从 URL 上传文件 (用于转存远程图片)
+     *
+     * @param imageUrl 远程图片 URL
+     * @param prefix   存储前缀
+     * @return 文件的访问 URL
+     */
+    public String uploadFromUrl(String imageUrl, String prefix) {
+        try {
+            java.net.URL url = new java.net.URL(imageUrl);
+            java.net.URLConnection conn = url.openConnection();
+            long contentLength = conn.getContentLengthLong();
+            String contentType = conn.getContentType();
+            
+            // 简单的文件名提取
+            String originalFilename = "remote_image.png";
+            String path = url.getPath();
+            if (path != null && path.length() > 0) {
+                 int idx = path.lastIndexOf('/');
+                 if (idx >= 0 && idx < path.length() - 1) {
+                     originalFilename = path.substring(idx + 1);
+                 }
+            }
+            // 处理一下文件名，去掉可能的 query param 干扰 (虽然 getPath 应该没有 query)
+            if (originalFilename.contains("?")) {
+                originalFilename = originalFilename.substring(0, originalFilename.indexOf("?"));
+            }
+            if (originalFilename.isEmpty()) {
+                originalFilename = "image.png";
+            }
+            // 补后缀
+            if (!originalFilename.contains(".")) {
+                originalFilename += ".png";
+            }
+
+            String fileKey = generateFileKey(originalFilename, prefix);
+
+            try (java.io.InputStream in = conn.getInputStream()) {
+                 PutObjectRequest putRequest = PutObjectRequest.builder()
+                        .bucket(storageConfig.getBucket())
+                        .key(fileKey)
+                        .contentType(contentType != null ? contentType : "image/png")
+                        .contentLength(contentLength > 0 ? contentLength : null) // 如果无法获取长度，传 null 可能会有问题，但 AWS SDK 对于流式上传通常需要长度或者分块
+                        .build();
+                 
+                 // 如果 content length 未知，需要先读取到内存或者临时文件获取大小，
+                 // 这里简单处理：如果 contentLength < 0，尝试读取到 byte array
+                 if (contentLength < 0) {
+                     byte[] bytes = in.readAllBytes();
+                     putRequest = putRequest.toBuilder().contentLength((long) bytes.length).build();
+                     s3Client.putObject(putRequest, RequestBody.fromBytes(bytes));
+                 } else {
+                     s3Client.putObject(putRequest, RequestBody.fromInputStream(in, contentLength));
+                 }
+            }
+            
+            log.info("远程文件转存成功: {} -> {}", imageUrl, fileKey);
+            return getFileUrl(fileKey);
+
+        } catch (Exception e) {
+            log.error("远程文件转存失败: {} - {}", imageUrl, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.STORAGE_UPLOAD_FAILED, "远程文件转存失败: " + e.getMessage());
+        }
+    }
+
     /**
      * 通用文件上传方法
      * 
