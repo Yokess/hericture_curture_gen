@@ -68,19 +68,69 @@ export default function AIDesign() {
         try {
             const projectToSave = {
                 ...project,
+                id: currentDesignId ? currentDesignId.toString() : undefined,
                 blueprintUrl: blueprintImg || undefined,
                 productShotUrl: productImg || undefined
             };
-            await designApi.saveDesign({
+            const res = await designApi.saveDesign({
                 userId: MOCK_USER_ID,
                 project: projectToSave,
                 userIdea: idea
             });
+            // 保存后获取返回的ID
+            if (res.data?.data?.id) {
+                setCurrentDesignId(res.data.data.id);
+            }
             setIsSaved(true);
             alert('设计已保存到您的作品库');
             loadUserDesigns();
         } catch (err) {
             alert('保存失败，请重试');
+        }
+    };
+
+    const handleGenerateAnalysis = async () => {
+        if (!project) {
+            alert('请先生成设计方案');
+            return;
+        }
+        
+        // 确保先保存
+        if (!currentDesignId) {
+            await handleSaveDesign();
+        }
+        
+        setIsProcessing(true);
+        try {
+            // 重新获取最新的设计列表以获取ID
+            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            const designs = res.data || [];
+            const latest = designs.find((d: DesignProject) => d.conceptName === project.conceptName);
+            
+            if (!latest) {
+                alert('找不到保存的设计');
+                return;
+            }
+            
+            const designId = parseInt(latest.id);
+            
+            // 生成分析报告
+            alert('正在生成市场分析、技术可行性和风险评估报告，请稍候...');
+            const analysisRes = await designApi.generateAnalysis({ concept: project });
+            const analysis = analysisRes.data;
+            
+            console.log('分析报告:', analysis);
+            
+            if (analysis && (analysis.marketAnalysis || analysis.technicalFeasibility || analysis.riskAssessment)) {
+                await designApi.saveAnalysis(designId, analysis);
+                alert('分析报告已生成并保存！\n\n请再次点击"导出方案"下载包含完整专业报告的PDF。');
+                loadUserDesigns();
+            }
+        } catch (err) {
+            console.error('生成分析失败:', err);
+            alert('生成分析报告失败，请重试');
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -467,10 +517,14 @@ export default function AIDesign() {
                                 
                                 {/* 底部操作栏 */}
                                 {productImg && (
-                                    <div className="mt-6 flex justify-end space-x-3">
+                                    <div className="mt-6 flex flex-wrap justify-end gap-2">
                                         <Button variant="outline" onClick={handleSaveDesign}>
                                             <Save className="w-4 h-4 mr-2" /> 
                                             {isSaved ? '已保存' : '保存设计'}
+                                        </Button>
+                                        <Button variant="outline" onClick={handleGenerateAnalysis} disabled={isProcessing}>
+                                            <Sparkles className="w-4 h-4 mr-2" /> 
+                                            生成分析报告
                                         </Button>
                                         <Button variant="outline" onClick={handleExportPdf}>
                                             <Download className="w-4 h-4 mr-2" /> 导出方案

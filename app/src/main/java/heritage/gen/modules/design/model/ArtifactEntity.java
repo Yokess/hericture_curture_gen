@@ -60,6 +60,18 @@ public class ArtifactEntity {
     @Column(name = "generation_metadata", columnDefinition = "jsonb")
     private Map<String, Object> generationMetadata;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "market_analysis", columnDefinition = "jsonb")
+    private Map<String, Object> marketAnalysis;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "technical_feasibility", columnDefinition = "jsonb")
+    private Map<String, Object> technicalFeasibility;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "risk_assessment", columnDefinition = "jsonb")
+    private Map<String, Object> riskAssessment;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

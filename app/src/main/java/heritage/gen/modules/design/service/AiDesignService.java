@@ -39,6 +39,14 @@ public class AiDesignService {
 
     private final PromptTemplate systemPromptTemplate;
     private final PromptTemplate userPromptTemplate;
+    
+    // 新增：市场分析、技术可行性、风险评估的prompt
+    private final PromptTemplate marketSystemPrompt;
+    private final PromptTemplate marketUserPrompt;
+    private final PromptTemplate technicalSystemPrompt;
+    private final PromptTemplate technicalUserPrompt;
+    private final PromptTemplate riskSystemPrompt;
+    private final PromptTemplate riskUserPrompt;
 
     private final heritage.gen.infrastructure.file.FileStorageService fileStorageService;
 
@@ -48,13 +56,26 @@ public class AiDesignService {
             DashScopeImageGenerator imageGenerator,
             heritage.gen.infrastructure.file.FileStorageService fileStorageService,
             @Value("classpath:prompts/design-concept-system.st") Resource systemPromptResource,
-            @Value("classpath:prompts/design-concept-user.st") Resource userPromptResource) throws IOException {
+            @Value("classpath:prompts/design-concept-user.st") Resource userPromptResource,
+            @Value("classpath:prompts/design-market-system.st") Resource marketSystemResource,
+            @Value("classpath:prompts/design-market-user.st") Resource marketUserResource,
+            @Value("classpath:prompts/design-technical-system.st") Resource technicalSystemResource,
+            @Value("classpath:prompts/design-technical-user.st") Resource technicalUserResource,
+            @Value("classpath:prompts/design-risk-system.st") Resource riskSystemResource,
+            @Value("classpath:prompts/design-risk-user.st") Resource riskUserResource) throws IOException {
         this.chatClient = chatClientBuilder.build();
         this.vectorService = vectorService;
         this.imageGenerator = imageGenerator;
         this.fileStorageService = fileStorageService;
         this.systemPromptTemplate = new PromptTemplate(systemPromptResource.getContentAsString(StandardCharsets.UTF_8));
         this.userPromptTemplate = new PromptTemplate(userPromptResource.getContentAsString(StandardCharsets.UTF_8));
+        
+        this.marketSystemPrompt = new PromptTemplate(marketSystemResource.getContentAsString(StandardCharsets.UTF_8));
+        this.marketUserPrompt = new PromptTemplate(marketUserResource.getContentAsString(StandardCharsets.UTF_8));
+        this.technicalSystemPrompt = new PromptTemplate(technicalSystemResource.getContentAsString(StandardCharsets.UTF_8));
+        this.technicalUserPrompt = new PromptTemplate(technicalUserResource.getContentAsString(StandardCharsets.UTF_8));
+        this.riskSystemPrompt = new PromptTemplate(riskSystemResource.getContentAsString(StandardCharsets.UTF_8));
+        this.riskUserPrompt = new PromptTemplate(riskUserResource.getContentAsString(StandardCharsets.UTF_8));
     }
 
     /**
@@ -295,5 +316,122 @@ public class AiDesignService {
     // 兼容旧调用方式（默认不强制 wan）
     private String callImageGenerator(String prompt, String negativePrompt) {
         return callImageGenerator(prompt, negativePrompt, null);
+    }
+
+    /**
+     * 生成市场分析报告
+     */
+    public Map<String, Object> generateMarketAnalysis(DesignConcept concept) {
+        log.info("生成市场分析报告: {}", concept.getConceptName());
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("conceptName", concept.getConceptName());
+            variables.put("designPhilosophy", concept.getDesignPhilosophy());
+            variables.put("materials", concept.getMaterials().stream()
+                    .map(m -> m.getName() + " " + m.getFinish())
+                    .collect(Collectors.joining(", ")));
+            variables.put("keyFeatures", concept.getKeyFeatures().stream()
+                    .collect(Collectors.joining(", ")));
+            
+            String userPrompt = marketUserPrompt.render(variables);
+            
+            String result = chatClient.prompt()
+                    .system(marketSystemPrompt.render())
+                    .user(userPrompt)
+                    .call()
+                    .content();
+            
+            return parseJsonToMap(result);
+        } catch (Exception e) {
+            log.error("市场分析生成失败", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "市场分析生成失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成技术可行性报告
+     */
+    public Map<String, Object> generateTechnicalFeasibility(DesignConcept concept) {
+        log.info("生成技术可行性报告: {}", concept.getConceptName());
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("conceptName", concept.getConceptName());
+            variables.put("formFactor", concept.getFormFactor());
+            variables.put("dimensions", concept.getDimensions());
+            variables.put("materials", concept.getMaterials().stream()
+                    .map(m -> m.getName() + " - " + m.getFinish())
+                    .collect(Collectors.joining(", ")));
+            variables.put("keyFeatures", concept.getKeyFeatures().stream()
+                    .collect(Collectors.joining(", ")));
+            
+            String userPrompt = technicalUserPrompt.render(variables);
+            
+            String result = chatClient.prompt()
+                    .system(technicalSystemPrompt.render())
+                    .user(userPrompt)
+                    .call()
+                    .content();
+            
+            return parseJsonToMap(result);
+        } catch (Exception e) {
+            log.error("技术可行性生成失败", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "技术可行性生成失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成风险评估报告
+     */
+    public Map<String, Object> generateRiskAssessment(DesignConcept concept) {
+        log.info("生成风险评估报告: {}", concept.getConceptName());
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("conceptName", concept.getConceptName());
+            variables.put("materials", concept.getMaterials().stream()
+                    .map(m -> m.getName() + " " + m.getFinish())
+                    .collect(Collectors.joining(", ")));
+            variables.put("userInteraction", concept.getUserInteraction());
+            variables.put("keyFeatures", concept.getKeyFeatures().stream()
+                    .collect(Collectors.joining(", ")));
+            
+            String userPrompt = riskUserPrompt.render(variables);
+            
+            String result = chatClient.prompt()
+                    .system(riskSystemPrompt.render())
+                    .user(userPrompt)
+                    .call()
+                    .content();
+            
+            return parseJsonToMap(result);
+        } catch (Exception e) {
+            log.error("风险评估生成失败", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "风险评估生成失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 解析JSON字符串为Map
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parseJsonToMap(String jsonStr) {
+        try {
+            jsonStr = jsonStr.trim();
+            if (jsonStr.startsWith("```json")) {
+                jsonStr = jsonStr.substring(7);
+            }
+            if (jsonStr.startsWith("```")) {
+                jsonStr = jsonStr.substring(3);
+            }
+            if (jsonStr.endsWith("```")) {
+                jsonStr = jsonStr.substring(0, jsonStr.length() - 3);
+            }
+            jsonStr = jsonStr.trim();
+            
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.readValue(jsonStr, Map.class);
+        } catch (Exception e) {
+            log.error("JSON解析失败: {}", jsonStr, e);
+            return new HashMap<>();
+        }
     }
 }

@@ -53,5 +53,13 @@ export const designApi = {
                 'Authorization': token || '',
             }
         }).then(res => res.blob());
+    },
+
+    generateAnalysis: (data: { concept: any }) => {
+        return axiosInstance.post<any, { data: any }>('/api/design/generate/analysis', data);
+    },
+
+    saveAnalysis: (id: number, analysis: any) => {
+        return axiosInstance.post<any, { data: any }>(`/api/design/${id}/analysis`, analysis);
     }
 };

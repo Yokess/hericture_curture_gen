@@ -10,6 +10,7 @@ redisson = "4.0.0"
 mapstruct = "1.6.3"
 aws-sdk = "2.29.51"
 itext = "8.0.5"
+pdfhtml = "4.0.5"
 saToken = "1.38.0"
 
 [libraries]
@@ -17,6 +18,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tika" }
 tika-parsers = { module = "org.apache.tika:tika-parsers-standard-package", version.ref = "tika" }
+itextpdf-html = { module = "com.itextpdf:html2pdf", version.ref = "pdfhtml" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

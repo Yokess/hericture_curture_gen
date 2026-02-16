@@ -68,6 +68,7 @@ dependencies {
     // PDF导出 - iText 8
     implementation "com.itextpdf:itext-core:${libs.versions.itext.get()}"
     implementation "com.itextpdf:font-asian:${libs.versions.itext.get()}"
+    implementation libs.itextpdf.html
 
     // Lombok
     compileOnly libs.lombok

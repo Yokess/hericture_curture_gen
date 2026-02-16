@@ -17,7 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RestController
@@ -106,15 +109,52 @@ public class DesignController {
         if (entity == null) {
             return ResponseEntity.notFound().build();
         }
-        
+        // 1. 生成 PDF 二进制数据
         byte[] pdfData = pdfExportService.generateDesignPdf(entity);
-        
+        // 2. 处理文件名编码
+        String rawFileName = (entity.getDesignName() != null ? entity.getDesignName() : "设计") + "_设计提案.pdf";
+        String encodedFileName = "design_proposal.pdf"; // 默认兜底文件名
+        try {
+            // 使用 UTF-8 编码文件名，解决中文乱码和报错
+            encodedFileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            log.warn("文件名编码失败", e);
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", entity.getDesignName() + "_设计提案.pdf");
-        
+        // 3. 设置 Content-Disposition
+        // 这种写法兼容性最好：filename=编码后的名字
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(pdfData);
+    }
+
+    @PostMapping("/generate/analysis")
+    public Result<Map<String, Object>> generateAnalysis(@RequestBody GenerateDesignRequest request) {
+        log.info("收到生成分析报告请求: conceptName={}", request.getConcept().getConceptName());
+        
+        Map<String, Object> analysis = new java.util.HashMap<>();
+        
+        // 生成市场分析
+        Map<String, Object> marketAnalysis = designService.generateMarketAnalysis(request.getConcept());
+        analysis.put("marketAnalysis", marketAnalysis);
+        
+        // 生成技术可行性
+        Map<String, Object> technicalFeasibility = designService.generateTechnicalFeasibility(request.getConcept());
+        analysis.put("technicalFeasibility", technicalFeasibility);
+        
+        // 生成风险评估
+        Map<String, Object> riskAssessment = designService.generateRiskAssessment(request.getConcept());
+        analysis.put("riskAssessment", riskAssessment);
+        
+        return Result.success(analysis);
+    }
+
+    @PostMapping("/{id}/analysis")
+    public Result<ArtifactEntity> saveAnalysis(@PathVariable Long id, @RequestBody Map<String, Object> analysis) {
+        log.info("保存分析报告: id={}", id);
+        ArtifactEntity entity = artifactService.saveAnalysis(id, analysis);
+        return Result.success(entity);
     }
 }

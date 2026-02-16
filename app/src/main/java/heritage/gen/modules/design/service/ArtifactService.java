@@ -23,10 +23,34 @@ public class ArtifactService {
 
     @Transactional
     public ArtifactEntity saveDesign(Long userId, DesignProject project, String userIdea) {
-        log.info("保存设计到数据库: userId={}, designName={}", userId, project.getConceptName());
+        log.info("保存设计到数据库: userId={}, designName={}, projectId={}", userId, project.getConceptName(), project.getId());
 
-        ArtifactEntity entity = new ArtifactEntity();
-        entity.setUserId(userId);
+        ArtifactEntity entity;
+        
+        // 如果有ID，则更新现有记录
+        if (project.getId() != null && !project.getId().isEmpty()) {
+            try {
+                Long id = Long.parseLong(project.getId());
+                entity = artifactRepository.findByIdActive(id);
+                if (entity != null && entity.getUserId().equals(userId)) {
+                    log.info("更新已有设计: id={}", id);
+                } else {
+                    entity = null;
+                }
+            } catch (Exception e) {
+                entity = null;
+            }
+        } else {
+            entity = null;
+        }
+        
+        // 如果没有找到现有记录，创建新的
+        if (entity == null) {
+            entity = new ArtifactEntity();
+            entity.setUserId(userId);
+            entity.setStatus("DRAFT");
+        }
+
         entity.setDesignName(project.getConceptName());
         entity.setDesignConcept(project.getDesignPhilosophy());
         entity.setBlueprintUrl(project.getBlueprintUrl());
@@ -51,8 +75,6 @@ public class ArtifactService {
         conceptData.put("colors", project.getColors());
         conceptData.put("keyFeatures", project.getKeyFeatures());
         entity.setConceptData(conceptData);
-
-        entity.setStatus("DRAFT");
 
         return artifactRepository.save(entity);
     }
@@ -122,5 +144,25 @@ public class ArtifactService {
         }
 
         return project;
+    }
+
+    @Transactional
+    public ArtifactEntity saveAnalysis(Long id, Map<String, Object> analysis) {
+        ArtifactEntity entity = artifactRepository.findByIdActive(id);
+        if (entity == null) {
+            throw new RuntimeException("设计不存在");
+        }
+        
+        if (analysis.containsKey("marketAnalysis")) {
+            entity.setMarketAnalysis((Map<String, Object>) analysis.get("marketAnalysis"));
+        }
+        if (analysis.containsKey("technicalFeasibility")) {
+            entity.setTechnicalFeasibility((Map<String, Object>) analysis.get("technicalFeasibility"));
+        }
+        if (analysis.containsKey("riskAssessment")) {
+            entity.setRiskAssessment((Map<String, Object>) analysis.get("riskAssessment"));
+        }
+        
+        return artifactRepository.save(entity);
     }
 }
