@@ -10,7 +10,7 @@ redisson = "4.0.0"
 mapstruct = "1.6.3"
 aws-sdk = "2.29.51"
 itext = "8.0.5"
-pdfhtml = "4.0.5"
+pdfhtml = "5.0.5"
 saToken = "1.38.0"
 
 [libraries]

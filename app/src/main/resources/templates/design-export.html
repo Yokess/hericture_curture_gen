@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: "Microsoft YaHei", "SimSun", sans-serif; 
+            color: #2c3e50;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        }
+        .page { 
+            width: 210mm; 
+            min-height: 297mm; 
+            padding: 20mm;
+            margin: 10px auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #8B4513;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 32px;
+            color: #8B4513;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: #999;
+            letter-spacing: 2px;
+        }
+        .product-image {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(145deg, #fafafa, #f0f0f0);
+            border-radius: 12px;
+        }
+        .product-image img {
+            max-width: 70%;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #fff;
+            border-left: 4px solid #D4AF37;
+            border-radius: 0 8px 8px 0;
+        }
+        .section-title {
+            font-size: 18px;
+            color: #8B4513;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .section-title span {
+            color: #D4AF37;
+            margin-right: 10px;
+        }
+        .section-content {
+            font-size: 13px;
+            color: #555;
+            text-align: justify;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #FFF8E7 0%, #FFF0D0 100%);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #D4AF37;
+        }
+        /* Grid 替换为 Table 布局 */
+        .card-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 15px 15px;
+            margin: 15px 0;
+        }
+        .card-td {
+            width: 50%;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #8B4513;
+            vertical-align: top;
+        }
+        .card-content {
+            font-size: 11px;
+            color: #666;
+        }
+        .color-list {
+            /* 使用 inline-block 布局 */
+            margin: 15px 0;
+        }
+        .color-item {
+            display: inline-block;
+            text-align: center;
+            margin-right: 15px;
+            margin-bottom: 15px;
+            vertical-align: top;
+        }
+        .color-swatch {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            margin-bottom: 5px;
+            border: 3px solid white;
+        }
+        .color-name {
+            font-size: 10px;
+            color: #666;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0 8px 25px;
+            position: relative;
+            font-size: 12px;
+            border-bottom: 1px dashed #eee;
+        }
+        .feature-list li span.bullet {
+            position: absolute;
+            left: 0;
+            color: #D4AF37;
+            font-weight: bold;
+        }
+        .analysis-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8f4f8 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .analysis-title {
+            font-size: 16px;
+            color: #2A5B8C;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2A5B8C;
+        }
+        /* Grid 替换为 Table 布局 */
+        .analysis-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 20px 10px;
+        }
+        .analysis-td {
+            width: 50%;
+            vertical-align: top;
+        }
+        /* Flex 替换为 Table 布局 */
+        .metric-table {
+            width: 100%;
+            background: white;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-collapse: collapse;
+        }
+        .metric-td {
+            padding: 10px;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 12px;
+            text-align: left;
+        }
+        .metric-value {
+            color: #8B4513;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: right;
+        }
+        .risk-section {
+            background: #FFF5F5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #E74C3C;
+        }
+        .risk-title {
+            color: #E74C3C;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .risk-content {
+            font-size: 11px;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 10px;
+        }
+        .brand {
+            color: #8B4513;
+            font-weight: bold;
+        }
+        @media print {
+            .page { box-shadow: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1 th:text="${entity.designName}">设计名称</h1>
+            <div class="subtitle">AI 智能文创设计提案 · HERITAGE CULTURE</div>
+        </div>
+
+        <!-- 产品图片 -->
+        <div class="product-image" th:if="${entity.productShotUrl != null and !entity.productShotUrl.isBlank()}">
+            <img th:src="${entity.productShotUrl}" alt="产品效果图" />
+        </div>
+
+        <!-- 设计理念 -->
+        <div class="section" th:if="${entity.designConcept != null}">
+            <div class="section-title"><span>◆</span>设计理念</div>
+            <div class="section-content highlight-box" th:text="${entity.designConcept}"></div>
+        </div>
+
+        <!-- 文化溯源 -->
+        <div class="section" th:if="${conceptData['culturalContext'] != null}">
+            <div class="section-title"><span>◆</span>文化溯源</div>
+            <div class="section-content" th:text="${conceptData['culturalContext']}"></div>
+        </div>
+
+        <!-- 形态规格 -->
+        <div class="section" th:if="${conceptData['formFactor'] != null}">
+            <div class="section-title"><span>◆</span>形态规格</div>
+            <div class="section-content" th:text="${conceptData['formFactor']}"></div>
+            <div class="highlight-box" style="margin-top:10px;" th:if="${conceptData['dimensions'] != null}" th:text="'📐 尺寸：' + ${conceptData['dimensions']}"></div>
+        </div>
+
+        <!-- 交互体验 -->
+        <div class="section" th:if="${conceptData['userInteraction'] != null}">
+            <div class="section-title"><span>◆</span>交互体验</div>
+            <div class="section-content" th:text="${conceptData['userInteraction']}"></div>
+        </div>
+
+        <!-- 材质工艺 (Grid -> Table) -->
+        <div class="section" th:if="${materialsList != null and !materialsList.isEmpty()}">
+            <div class="section-title"><span>◆</span>材质工艺</div>
+            <table class="card-table">
+                <!-- 这里的逻辑稍微复杂，需要每两个元素一行 -->
+                <tr th:each="i : ${#numbers.sequence(0, materialsList.size() - 1, 2)}">
+                    <td class="card-td">
+                        <div class="card-content" th:text="${materialsList[i]}"></div>
+                    </td>
+                    <td class="card-td" th:if="${i + 1 < materialsList.size()}">
+                        <div class="card-content" th:text="${materialsList[i + 1]}"></div>
+                    </td>
+                    <!-- 补全空单元格以保持样式一致 -->
+                    <td class="card-td" th:if="${i + 1 >= materialsList.size()}" style="visibility: hidden;"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 色彩方案 -->
+        <div class="section" th:if="${colorsList != null and !colorsList.isEmpty()}">
+            <div class="section-title"><span>◆</span>色彩方案</div>
+            <div class="color-list">
+                <div class="color-item" th:each="color : ${colorsList}">
+                    <div class="color-swatch" th:style="'background:' + ${color.hex}"></div>
+                    <div class="color-name" th:text="${color.name}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心功能点 -->
+        <div class="section" th:if="${featuresList != null and !featuresList.isEmpty()}">
+            <div class="section-title"><span>◆</span>核心功能点</div>
+            <ul class="feature-list">
+                <li th:each="feature : ${featuresList}">
+                    <span class="bullet">✓</span>
+                    <span th:text="${feature}"></span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 市场分析 (Flex -> Table) -->
+        <div class="analysis-section" th:if="${market != null}">
+            <div class="analysis-title">📊 市场分析与商业定位</div>
+            <table class="analysis-table">
+                <tr>
+                    <td class="analysis-td" th:if="${market['targetPersona'] != null}">
+                        <table class="metric-table">
+                            <tr>
+                                <td class="metric-td metric-label">目标客群</td>
+                                <td class="metric-td metric-value" th:text="${#strings.length(market['targetPersona']) > 50 ? #strings.substring(market['targetPersona'], 0, 50) + '...' : market['targetPersona']}"></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td class="analysis-td" th:if="${market['priceRange'] != null}">
+                        <table class="metric-table">
+                            <tr>
+                                <td class="metric-td metric-label">定价区间</td>
+                                <td class="metric-td metric-value" th:text="${market['priceRange']}"></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="analysis-td" th:if="${market['marketPositioning'] != null}" colspan="2">
+                        <table class="metric-table">
+                            <tr>
+                                <td class="metric-td metric-label">市场定位</td>
+                                <td class="metric-td metric-value" th:text="${market['marketPositioning']}"></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 技术可行性 (Flex -> Table) -->
+        <div class="analysis-section" th:if="${tech != null}">
+            <div class="analysis-title">⚙️ 技术可行性与生产成本</div>
+            <table class="metric-table" th:if="${tech['manufacturingComplexity'] != null}">
+                <tr>
+                    <td class="metric-td metric-label">制造复杂度</td>
+                    <td class="metric-td metric-value" th:text="${tech['manufacturingComplexity']}"></td>
+                </tr>
+            </table>
+            <table class="metric-table" th:if="${tech['minOrderQuantity'] != null}">
+                <tr>
+                    <td class="metric-td metric-label">最小起订量</td>
+                    <td class="metric-td metric-value" th:text="${tech['minOrderQuantity']}"></td>
+                </tr>
+            </table>
+            <table class="metric-table" th:if="${tech['leadTime'] != null}">
+                <tr>
+                    <td class="metric-td metric-label">预计交期</td>
+                    <td class="metric-td metric-value" th:text="${tech['leadTime']}"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 风险评估 -->
+        <div class="analysis-section" th:if="${risk != null}">
+            <div class="analysis-title">⚠️ 风险评估与限制说明</div>
+            
+            <div class="risk-section" th:if="${materialRisksList != null and !materialRisksList.isEmpty()}">
+                <div class="risk-title">材质风险</div>
+                <div class="risk-content" th:text="${#strings.listJoin(materialRisksList, ', ')}"></div>
+            </div>
+
+            <div class="risk-section" th:if="${electronicRisksList != null and !electronicRisksList.isEmpty()}">
+                <div class="risk-title">电子元件风险</div>
+                <div class="risk-content" th:text="${#strings.listJoin(electronicRisksList, ', ')}"></div>
+            </div>
+
+            <table class="metric-table" th:if="${risk['warrantyPeriod'] != null}">
+                <tr>
+                    <td class="metric-td metric-label">建议质保期</td>
+                    <td class="metric-td metric-value" th:text="${risk['warrantyPeriod']} + '个月'"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Generated by <span class="brand">Heritage Culture</span> AI Design Platform</p>
+            <p>© 2026 Heritage Culture. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
