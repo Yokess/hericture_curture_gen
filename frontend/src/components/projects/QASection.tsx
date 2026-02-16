@@ -68,7 +68,16 @@ export function QASection() {
                 title: '非遗知识问答'
             });
 
-            const detail = await ragChatApi.getSessionDetail(session.id);
+            // 修复: createSession 返回的数据可能被封装在 data 属性中，或者结构不同
+            // 后端返回的结构是 Result<SessionDTO>，前端 api 层可能直接返回了 data 部分
+            // 假设 session 已经是 SessionDTO，直接取 id
+            const sessionId = session.id || (session as any).data?.id;
+
+            if (!sessionId) {
+                throw new Error('创建会话返回数据异常，无法获取会话ID');
+            }
+
+            const detail = await ragChatApi.getSessionDetail(sessionId);
             setCurrentSession(detail);
             setMessages(detail.messages);
             loadSessions(); // 刷新会话列表

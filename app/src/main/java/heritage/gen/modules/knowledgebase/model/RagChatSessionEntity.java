@@ -35,6 +35,13 @@ public class RagChatSessionEntity {
     private String title;
 
     /**
+     * 会话所属用户ID
+     * columnDefinition = "bigint default 0" 用于解决存量数据 DDL 迁移失败问题
+     */
+    @Column(nullable = false, columnDefinition = "bigint default 0")
+    private Long userId;
+
+    /**
      * 会话状态
      */
     @Enumerated(EnumType.STRING)

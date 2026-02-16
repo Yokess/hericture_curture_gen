@@ -1,4 +1,5 @@
-import axios from 'axios';
+import request from '@/utils/request';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 const BASE_URL = '/api/rag-chat';
 
@@ -104,53 +105,53 @@ export const ragChatApi = {
     /**
      * 创建新会话
      */
-    createSession: async (request: CreateSessionRequest): Promise<SessionDTO> => {
-        const response = await axios.post(`${BASE_URL}/sessions`, request);
-        return response.data.data;
+    createSession: async (requestData: CreateSessionRequest): Promise<SessionDTO> => {
+        const response = await request.post(`${BASE_URL}/sessions`, requestData);
+        return response.data;
     },
 
     /**
      * 获取会话列表
      */
     listSessions: async (): Promise<SessionListItemDTO[]> => {
-        const response = await axios.get(`${BASE_URL}/sessions`);
-        return response.data.data || [];
+        const response = await request.get(`${BASE_URL}/sessions`);
+        return response.data || [];
     },
 
     /**
      * 获取会话详情
      */
     getSessionDetail: async (sessionId: number): Promise<SessionDetailDTO> => {
-        const response = await axios.get(`${BASE_URL}/sessions/${sessionId}`);
-        return response.data.data;
+        const response = await request.get(`${BASE_URL}/sessions/${sessionId}`);
+        return response.data;
     },
 
     /**
      * 更新会话标题
      */
     updateTitle: async (sessionId: number, title: string): Promise<void> => {
-        await axios.put(`${BASE_URL}/sessions/${sessionId}/title`, { title });
+        await request.put(`${BASE_URL}/sessions/${sessionId}/title`, { title });
     },
 
     /**
      * 切换置顶状态
      */
     togglePin: async (sessionId: number): Promise<void> => {
-        await axios.put(`${BASE_URL}/sessions/${sessionId}/pin`);
+        await request.put(`${BASE_URL}/sessions/${sessionId}/pin`);
     },
 
     /**
      * 更新关联知识库
      */
     updateKnowledgeBases: async (sessionId: number, knowledgeBaseIds: number[]): Promise<void> => {
-        await axios.put(`${BASE_URL}/sessions/${sessionId}/knowledge-bases`, { knowledgeBaseIds });
+        await request.put(`${BASE_URL}/sessions/${sessionId}/knowledge-bases`, { knowledgeBaseIds });
     },
 
     /**
      * 删除会话
      */
     deleteSession: async (sessionId: number): Promise<void> => {
-        await axios.delete(`${BASE_URL}/sessions/${sessionId}`);
+        await request.delete(`${BASE_URL}/sessions/${sessionId}`);
     },
 
     /**
@@ -171,20 +172,29 @@ export const ragChatApi = {
         onComplete: () => void,
         onError: (error: Error) => void
     ): Promise<AbortController> => {
-        const url = `${BASE_URL}/sessions/${sessionId}/messages/stream`;
+        const url = `${import.meta.env.VITE_API_BASE_URL || ''}${BASE_URL}/sessions/${sessionId}/messages/stream`;
         const abortController = new AbortController();
 
         try {
+            const token = tokenStorage.getToken();
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': token } : {}),
                 },
                 body: JSON.stringify({ question }),
                 signal: abortController.signal,
             });
 
             if (!response.ok) {
+                // 如果是 401，清除 token 并跳转
+                if (response.status === 401) {
+                    tokenStorage.clear();
+                    window.location.href = '/login';
+                    throw new Error('登录已过期，请重新登录');
+                }
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 

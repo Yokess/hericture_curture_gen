@@ -1,5 +1,6 @@
 package heritage.gen.modules.knowledgebase;
 
+import cn.dev33.satoken.stp.StpUtil;
 import heritage.gen.common.result.Result;
 import heritage.gen.modules.knowledgebase.model.RagChatDTO.*;
 import heritage.gen.modules.knowledgebase.service.KnowledgeBaseQueryService;
@@ -30,7 +31,8 @@ public class RagChatController {
      */
     @PostMapping("/api/rag-chat/sessions")
     public Result<SessionDTO> createSession(@Valid @RequestBody CreateSessionRequest request) {
-        return Result.success(sessionService.createSession(request));
+        Long userId = StpUtil.getLoginIdAsLong();
+        return Result.success(sessionService.createSession(userId, request));
     }
 
     /**
@@ -38,7 +40,8 @@ public class RagChatController {
      */
     @GetMapping("/api/rag-chat/sessions")
     public Result<List<SessionListItemDTO>> listSessions() {
-        return Result.success(sessionService.listSessions());
+        Long userId = StpUtil.getLoginIdAsLong();
+        return Result.success(sessionService.listSessions(userId));
     }
 
     /**
@@ -46,7 +49,8 @@ public class RagChatController {
      */
     @GetMapping("/api/rag-chat/sessions/{sessionId}")
     public Result<SessionDetailDTO> getSessionDetail(@PathVariable Long sessionId) {
-        return Result.success(sessionService.getSessionDetail(sessionId));
+        Long userId = StpUtil.getLoginIdAsLong();
+        return Result.success(sessionService.getSessionDetail(userId, sessionId));
     }
 
     /**
@@ -56,7 +60,8 @@ public class RagChatController {
     public Result<Void> updateSessionTitle(
             @PathVariable Long sessionId,
             @Valid @RequestBody UpdateTitleRequest request) {
-        sessionService.updateSessionTitle(sessionId, request.title());
+        Long userId = StpUtil.getLoginIdAsLong();
+        sessionService.updateSessionTitle(userId, sessionId, request.title());
         return Result.success(null);
     }
 
@@ -65,7 +70,8 @@ public class RagChatController {
      */
     @PutMapping("/api/rag-chat/sessions/{sessionId}/pin")
     public Result<Void> togglePin(@PathVariable Long sessionId) {
-        sessionService.togglePin(sessionId);
+        Long userId = StpUtil.getLoginIdAsLong();
+        sessionService.togglePin(userId, sessionId);
         return Result.success(null);
     }
 
@@ -76,7 +82,8 @@ public class RagChatController {
     public Result<Void> updateSessionKnowledgeBases(
             @PathVariable Long sessionId,
             @Valid @RequestBody UpdateKnowledgeBasesRequest request) {
-        sessionService.updateSessionKnowledgeBases(sessionId, request.knowledgeBaseIds());
+        Long userId = StpUtil.getLoginIdAsLong();
+        sessionService.updateSessionKnowledgeBases(userId, sessionId, request.knowledgeBaseIds());
         return Result.success(null);
     }
 
@@ -85,7 +92,8 @@ public class RagChatController {
      */
     @DeleteMapping("/api/rag-chat/sessions/{sessionId}")
     public Result<Void> deleteSession(@PathVariable Long sessionId) {
-        sessionService.deleteSession(sessionId);
+        Long userId = StpUtil.getLoginIdAsLong();
+        sessionService.deleteSession(userId, sessionId);
         return Result.success(null);
     }
 
@@ -102,15 +110,16 @@ public class RagChatController {
             @PathVariable Long sessionId,
             @Valid @RequestBody SendMessageRequest request) {
 
-        log.info("收到 RAG 聊天流式请求: sessionId={}, question={}", sessionId, request.question());
+        Long userId = StpUtil.getLoginIdAsLong();
+        log.info("收到 RAG 聊天流式请求: sessionId={}, userId={}, question={}", sessionId, userId, request.question());
 
         // 1. 准备消息（保存用户消息，创建 AI 消息占位）
-        Long messageId = sessionService.prepareStreamMessage(sessionId, request.question());
+        Long messageId = sessionService.prepareStreamMessage(userId, sessionId, request.question());
 
         // 2. 获取流式响应
         StringBuilder fullContent = new StringBuilder();
 
-        return sessionService.getStreamAnswer(sessionId, request.question())
+        return sessionService.getStreamAnswer(userId, sessionId, request.question())
                 .doOnNext(chunk -> {
                     fullContent.append(chunk);
                     // 可选：如果未来恢复逐字 streaming，这里可以做更细粒度的处理

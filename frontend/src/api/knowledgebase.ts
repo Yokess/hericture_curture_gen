@@ -1,4 +1,4 @@
-import axios from 'axios';
+import request from '@/utils/request';
 
 // 知识库项接口
 export interface KnowledgeBaseItem {
@@ -31,31 +31,32 @@ const BASE_URL = '/api/knowledgebase';
 export const knowledgebaseApi = {
     // 获取知识库列表（支持排序）
     listKnowledgeBases: async (sortBy?: string): Promise<KnowledgeBaseItem[]> => {
-        const response = await axios.get(`${BASE_URL}/list`, {
+        const response = await request.get(`${BASE_URL}/list`, {
             params: sortBy ? { sortBy } : {}
         });
-        // 适配后端返回的 Result 结构
-        return response.data.data || [];
+        // 适配后端返回的 Result 结构 (request 拦截器已经解包了 Result.data, 但这里后端可能返回了 data: {data: []})
+        // 假设 request 拦截器返回的是 response.data
+        return response.data || [];
     },
 
     // 获取知识库详情
     getKnowledgeBase: async (id: number): Promise<KnowledgeBaseItem> => {
-        const response = await axios.get(`${BASE_URL}/${id}`);
-        return response.data.data;
+        const response = await request.get(`${BASE_URL}/${id}`);
+        return response.data;
     },
 
     // 搜索知识库
     searchKnowledgeBases: async (keyword: string): Promise<KnowledgeBaseItem[]> => {
-        const response = await axios.get(`${BASE_URL}/search`, {
+        const response = await request.get(`${BASE_URL}/search`, {
             params: { keyword }
         });
-        return response.data.data || [];
+        return response.data || [];
     },
 
     // 获取统计信息
     getStatistics: async (): Promise<KnowledgeBaseStats> => {
-        const response = await axios.get(`${BASE_URL}/stats`);
-        return response.data.data || {
+        const response = await request.get(`${BASE_URL}/stats`);
+        return response.data || {
             totalCount: 0,
             vectorizedCount: 0,
             totalQuestions: 0,
@@ -65,54 +66,54 @@ export const knowledgebaseApi = {
 
     // 上传知识库
     uploadKnowledgeBase: async (formData: FormData): Promise<any> => {
-        const response = await axios.post(`${BASE_URL}/upload`, formData, {
+        const response = await request.post(`${BASE_URL}/upload`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
-        return response.data;
+        return response; // 已经是 data
     },
 
     // 删除知识库
     deleteKnowledgeBase: async (id: number): Promise<void> => {
-        await axios.delete(`${BASE_URL}/${id}`);
+        await request.delete(`${BASE_URL}/${id}`);
     },
 
     // 下载知识库
     downloadKnowledgeBase: async (id: number): Promise<Blob> => {
-        const response = await axios.get(`${BASE_URL}/${id}/download`, {
+        const response = await request.get(`${BASE_URL}/${id}/download`, {
             responseType: 'blob'
         });
-        return response.data;
+        return response as any as Blob;
     },
 
     // 重新向量化
     revectorize: async (id: number): Promise<void> => {
-        await axios.post(`${BASE_URL}/${id}/revectorize`);
+        await request.post(`${BASE_URL}/${id}/revectorize`);
     },
 
     // ========== 分类管理 API ==========
 
     // 获取所有分类
     getAllCategories: async (): Promise<string[]> => {
-        const response = await axios.get(`${BASE_URL}/categories`);
-        return response.data.data || [];
+        const response = await request.get(`${BASE_URL}/categories`);
+        return response.data || [];
     },
 
     // 根据分类获取知识库列表
     getByCategory: async (category: string): Promise<KnowledgeBaseItem[]> => {
-        const response = await axios.get(`${BASE_URL}/category/${encodeURIComponent(category)}`);
-        return response.data.data || [];
+        const response = await request.get(`${BASE_URL}/category/${encodeURIComponent(category)}`);
+        return response.data || [];
     },
 
     // 获取未分类的知识库
     getUncategorized: async (): Promise<KnowledgeBaseItem[]> => {
-        const response = await axios.get(`${BASE_URL}/uncategorized`);
-        return response.data.data || [];
+        const response = await request.get(`${BASE_URL}/uncategorized`);
+        return response.data || [];
     },
 
     // 更新知识库分类
     updateCategory: async (id: number, category: string | null): Promise<void> => {
-        await axios.put(`${BASE_URL}/${id}/category`, { category });
+        await request.put(`${BASE_URL}/${id}/category`, { category });
     }
 };

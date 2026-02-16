@@ -1,42 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
-const apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// 请求拦截器
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('heritage_auth_token');
-        if (token) {
-            config.headers.Authorization = token; // 后端期望的格式（Sa-Token）
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// 响应拦截器
-apiClient.interceptors.response.use(
-    (response) => {
-        // 后端返回的是 Result { code, message, data }
-        // 直接返回原始响应，让调用方处理
-        return response;
-    },
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('heritage_auth_token');
-            localStorage.removeItem('heritage_user_info');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
+import request from '@/utils/request';
 
 // ========== 类型定义 ==========
 
@@ -79,24 +41,22 @@ export const adminApi = {
         keyword?: string;
         enabled?: boolean;
     }): Promise<PageResult<User>> {
-        const response = await apiClient.get<Result<PageResult<User>>>('/api/admin/users', { params });
-        // 后端返回 Result { code, message, data: Page }
-        // 需要从 response.data.data 中获取 Page 数据
-        return response.data.data;
+        const response = await request.get<any, Result<PageResult<User>>>('/api/admin/users', { params });
+        return response.data;
     },
 
     /**
      * 禁用/启用用户
      */
     async toggleUserStatus(userId: number, enabled: boolean): Promise<void> {
-        await apiClient.put(`/api/admin/users/${userId}/status`, { enabled });
+        await request.put(`/api/admin/users/${userId}/status`, { enabled });
     },
 
     /**
      * 设置用户角色
      */
     async setUserRole(userId: number, isAdmin: boolean): Promise<void> {
-        await apiClient.put(`/api/admin/users/${userId}/role`, { isAdmin });
+        await request.put(`/api/admin/users/${userId}/role`, { isAdmin });
     },
 
     // ... User methods ...
@@ -105,7 +65,7 @@ export const adminApi = {
      * 删除用户
      */
     async deleteUser(userId: number): Promise<void> {
-        await apiClient.delete(`/api/admin/users/${userId}`);
+        await request.delete(`/api/admin/users/${userId}`);
     },
 
     // ========== 非遗项目管理 ==========
@@ -116,22 +76,22 @@ export const adminApi = {
         keyword?: string;
         category?: string;
     }): Promise<PageResult<HeritageProject>> {
-        const response = await apiClient.get<Result<PageResult<HeritageProject>>>('/api/admin/heritage/projects', { params });
-        return response.data.data;
+        const response = await request.get<any, Result<PageResult<HeritageProject>>>('/api/admin/heritage/projects', { params });
+        return response.data;
     },
 
     async createHeritageProject(data: Partial<HeritageProject>): Promise<HeritageProject> {
-        const response = await apiClient.post<Result<HeritageProject>>('/api/admin/heritage/projects', data);
-        return response.data.data;
+        const response = await request.post<any, Result<HeritageProject>>('/api/admin/heritage/projects', data);
+        return response.data;
     },
 
     async updateHeritageProject(id: number, data: Partial<HeritageProject>): Promise<HeritageProject> {
-        const response = await apiClient.put<Result<HeritageProject>>(`/api/admin/heritage/projects/${id}`, data);
-        return response.data.data;
+        const response = await request.put<any, Result<HeritageProject>>(`/api/admin/heritage/projects/${id}`, data);
+        return response.data;
     },
 
     async deleteHeritageProject(id: number): Promise<void> {
-        await apiClient.delete(`/api/admin/heritage/projects/${id}`);
+        await request.delete(`/api/admin/heritage/projects/${id}`);
     },
 
     // ========== 传承人管理 ==========
@@ -142,22 +102,22 @@ export const adminApi = {
         keyword?: string;
         projectId?: number;
     }): Promise<PageResult<Successor>> {
-        const response = await apiClient.get<Result<PageResult<Successor>>>('/api/admin/heritage/successors', { params });
-        return response.data.data;
+        const response = await request.get<any, Result<PageResult<Successor>>>('/api/admin/heritage/successors', { params });
+        return response.data;
     },
 
     async createSuccessor(data: Partial<Successor>): Promise<Successor> {
-        const response = await apiClient.post<Result<Successor>>('/api/admin/heritage/successors', data);
-        return response.data.data;
+        const response = await request.post<any, Result<Successor>>('/api/admin/heritage/successors', data);
+        return response.data;
     },
 
     async updateSuccessor(id: number, data: Partial<Successor>): Promise<Successor> {
-        const response = await apiClient.put<Result<Successor>>(`/api/admin/heritage/successors/${id}`, data);
-        return response.data.data;
+        const response = await request.put<any, Result<Successor>>(`/api/admin/heritage/successors/${id}`, data);
+        return response.data;
     },
 
     async deleteSuccessor(id: number): Promise<void> {
-        await apiClient.delete(`/api/admin/heritage/successors/${id}`);
+        await request.delete(`/api/admin/heritage/successors/${id}`);
     },
 };
 

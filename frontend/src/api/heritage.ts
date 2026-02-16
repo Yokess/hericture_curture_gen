@@ -1,13 +1,4 @@
-import axios from 'axios';
-
-// 创建 axios 实例
-const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+import request from '@/utils/request';
 
 // ==================== 类型定义 ====================
 
@@ -85,41 +76,41 @@ export const heritageApi = {
         page?: number;
         size?: number;
     }): Promise<PageResponse<ProjectListItem>> {
-        const response = await apiClient.get<Result<PageResponse<ProjectListItem>>>('/heritage/projects', { params });
-        return response.data.data; // 解包 Result
+        const response = await request.get<any, Result<PageResponse<ProjectListItem>>>('/api/heritage/projects', { params });
+        return response.data; // request 已经解包了一层，这里返回的 response 是 data
     },
 
     /**
      * 搜索项目
      */
     async searchProjects(keyword: string, page = 0, size = 12): Promise<PageResponse<ProjectListItem>> {
-        const response = await apiClient.get<Result<PageResponse<ProjectListItem>>>('/heritage/projects/search', {
+        const response = await request.get<any, Result<PageResponse<ProjectListItem>>>('/api/heritage/projects/search', {
             params: { keyword, page, size }
         });
-        return response.data.data; // 解包 Result
+        return response.data;
     },
 
     /**
      * 获取项目详情
      */
     async getProjectDetail(id: number): Promise<ProjectDetail> {
-        const response = await apiClient.get<Result<ProjectDetail>>(`/heritage/projects/${id}`);
-        return response.data.data; // 解包 Result
+        const response = await request.get<any, Result<ProjectDetail>>(`/api/heritage/projects/${id}`);
+        return response.data;
     },
 
     /**
      * 获取所有类别
      */
     async getCategories(): Promise<string[]> {
-        const response = await apiClient.get<Result<string[]>>('/heritage/categories');
-        return response.data.data; // 解包 Result
+        const response = await request.get<any, Result<string[]>>('/api/heritage/categories');
+        return response.data;
     },
 
     /**
      * 获取所有地区
      */
     async getLocations(): Promise<string[]> {
-        const response = await apiClient.get<Result<string[]>>('/heritage/locations');
-        return response.data.data; // 解包 Result
+        const response = await request.get<any, Result<string[]>>('/api/heritage/locations');
+        return response.data;
     },
 };

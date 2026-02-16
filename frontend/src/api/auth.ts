@@ -1,57 +1,5 @@
-import axios from 'axios';
-
-// 创建 axios 实例
-const authClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Token 存储键名
-const TOKEN_KEY = 'heritage_auth_token';
-const USER_KEY = 'heritage_user_info';
-
-// 请求拦截器 - 自动添加 Token
-authClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem(TOKEN_KEY);
-        if (token) {
-            // 后端使用 Authorization 作为 Token 名称
-            config.headers.Authorization = token;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// 响应拦截器 - 处理统一响应格式和 401
-authClient.interceptors.response.use(
-    (response) => {
-        // 后端返回格式:{ code: 200, message: "success", data: {...} }
-        const { code, message, data } = response.data;
-
-        if (code === 200) {
-            return { ...response, data }; // 返回 data 部分
-        }
-
-        // 处理业务错误
-        return Promise.reject(new Error(message || '请求失败'));
-    },
-    (error) => {
-        if (error.response?.status === 401 || error.response?.data?.code === 401) {
-            // 清除 Token
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(USER_KEY);
-            // 跳转到登录页
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
+import request from '@/utils/request';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 // ==================== 类型定义 ====================
 
@@ -109,19 +57,19 @@ export const authApi = {
      * 用户登录
      */
     async login(data: LoginRequest): Promise<LoginResponse> {
-        const response = await authClient.post<LoginResponse>('/auth/login', data);
+        const response = await request.post<LoginResponse>('/api/auth/login', data);
         const loginData = response.data;
 
         // 保存 Token 和用户信息
         if (loginData.token) {
-            localStorage.setItem(TOKEN_KEY, loginData.token);
-            localStorage.setItem(USER_KEY, JSON.stringify({
+            tokenStorage.setToken(loginData.token);
+            tokenStorage.setUser({
                 id: loginData.userId,
                 username: loginData.username,
                 nickname: loginData.nickname,
                 isAdmin: loginData.isAdmin,
                 avatarUrl: loginData.avatarUrl,
-            }));
+            });
         }
 
         return loginData;
@@ -131,7 +79,7 @@ export const authApi = {
      * 用户注册
      */
     async register(data: RegisterRequest): Promise<RegisterResponse> {
-        const response = await authClient.post<RegisterResponse>('/auth/register', data);
+        const response = await request.post<RegisterResponse>('/api/auth/register', data);
         return response.data;
     },
 
@@ -140,10 +88,9 @@ export const authApi = {
      */
     async logout(): Promise<void> {
         try {
-            await authClient.post('/auth/logout');
+            await request.post('/api/auth/logout');
         } finally {
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(USER_KEY);
+            tokenStorage.clear();
         }
     },
 
@@ -152,7 +99,7 @@ export const authApi = {
      */
     async getCurrentUser(): Promise<UserProfile | null> {
         try {
-            const response = await authClient.get<UserProfile>('/user/profile');
+            const response = await request.get<UserProfile>('/api/user/profile');
             return response.data;
         } catch (error) {
             return null;
@@ -168,7 +115,7 @@ export const authApi = {
         email?: string;
         phone?: string;
     }): Promise<UserProfile> {
-        const response = await authClient.put<UserProfile>('/user/profile', data);
+        const response = await request.put<UserProfile>('/api/user/profile', data);
 
         // 更新本地存储的用户信息
         const localUser = this.getLocalUser();
@@ -178,7 +125,7 @@ export const authApi = {
                 nickname: data.nickname || localUser.nickname,
                 avatarUrl: data.avatarUrl || localUser.avatarUrl,
             };
-            localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+            tokenStorage.setUser(updatedUser);
         }
 
         return response.data;
@@ -188,35 +135,27 @@ export const authApi = {
      * 修改密码
      */
     async changePassword(data: { oldPassword: string; newPassword: string }): Promise<void> {
-        await authClient.put('/user/password', data);
+        await request.put('/api/user/password', data);
     },
 
     /**
      * 检查是否已登录
      */
     isAuthenticated(): boolean {
-        return !!localStorage.getItem(TOKEN_KEY);
+        return tokenStorage.isAuthenticated();
     },
 
     /**
      * 获取本地存储的用户信息
      */
     getLocalUser(): { id: number; username: string; nickname: string; isAdmin: boolean; avatarUrl?: string } | null {
-        const userStr = localStorage.getItem(USER_KEY);
-        if (userStr) {
-            try {
-                return JSON.parse(userStr);
-            } catch {
-                return null;
-            }
-        }
-        return null;
+        return tokenStorage.getUser();
     },
 
     /**
      * 获取 Token
      */
     getToken(): string | null {
-        return localStorage.getItem(TOKEN_KEY);
+        return tokenStorage.getToken();
     },
 };

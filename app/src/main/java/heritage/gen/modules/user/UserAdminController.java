@@ -1,5 +1,6 @@
 package heritage.gen.modules.user;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import heritage.gen.common.exception.BusinessException;
 import heritage.gen.common.exception.ErrorCode;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@SaCheckRole("admin")
 public class UserAdminController {
 
     private final UserAdminService userAdminService;
@@ -34,9 +36,6 @@ public class UserAdminController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Boolean enabled) {
 
-        // 检查管理员权限
-        checkAdminPermission();
-
         Page<UserAdminDTO> users = userAdminService.listUsers(page, size, keyword, enabled);
         return Result.success(users);
     }
@@ -48,8 +47,6 @@ public class UserAdminController {
     public Result<Void> toggleUserStatus(
             @PathVariable Long userId,
             @RequestBody Map<String, Boolean> body) {
-
-        checkAdminPermission();
 
         Boolean enabled = body.get("enabled");
         if (enabled == null) {
@@ -68,8 +65,6 @@ public class UserAdminController {
             @PathVariable Long userId,
             @RequestBody Map<String, Boolean> body) {
 
-        checkAdminPermission();
-
         Boolean isAdmin = body.get("isAdmin");
         if (isAdmin == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "缺少 isAdmin 参数");
@@ -84,21 +79,7 @@ public class UserAdminController {
      */
     @DeleteMapping("/users/{userId}")
     public Result<Void> deleteUser(@PathVariable Long userId) {
-        checkAdminPermission();
-
         userAdminService.deleteUser(userId);
         return Result.success();
-    }
-
-    /**
-     * 检查管理员权限
-     */
-    private void checkAdminPermission() {
-        if (!StpUtil.isLogin()) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "请先登录");
-        }
-
-        // TODO: 实现更严格的管理员权限检查
-        // 目前简单检查是否登录
     }
 }

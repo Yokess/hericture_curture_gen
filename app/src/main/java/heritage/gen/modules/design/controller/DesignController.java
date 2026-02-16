@@ -1,5 +1,6 @@
 package heritage.gen.modules.design.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import heritage.gen.common.result.Result;
 import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignProject;
@@ -58,19 +59,22 @@ public class DesignController {
 
     @PostMapping("/save")
     public Result<ArtifactEntity> saveDesign(@RequestBody SaveDesignRequest request) {
-        log.info("收到保存设计请求: userId={}, designName={}", request.getUserId(), request.getProject().getConceptName());
-        ArtifactEntity saved = artifactService.saveDesign(request.getUserId(), request.getProject(), request.getUserIdea());
+        Long userId = StpUtil.getLoginIdAsLong();
+        log.info("收到保存设计请求: userId={}, designName={}", userId, request.getProject().getConceptName());
+        ArtifactEntity saved = artifactService.saveDesign(userId, request.getProject(), request.getUserIdea());
         return Result.success(saved);
     }
 
-    @GetMapping("/user/{userId}")
-    public Result<List<DesignProject>> getUserDesigns(@PathVariable Long userId) {
-        log.info("获取用户设计列表: userId={}", userId);
+    @GetMapping("/list")
+    public Result<List<DesignProject>> getMyDesigns() {
+        Long userId = StpUtil.getLoginIdAsLong();
+        log.info("获取当前用户设计列表: userId={}", userId);
         List<DesignProject> projects = artifactService.getUserDesigns(userId).stream()
                 .map(artifactService::convertToDesignProject)
                 .collect(Collectors.toList());
         return Result.success(projects);
     }
+
 
     @GetMapping("/{id}")
     public Result<DesignProject> getDesignById(@PathVariable Long id) {
@@ -80,14 +84,16 @@ public class DesignController {
     }
 
     @PostMapping("/{id}/publish")
-    public Result<ArtifactEntity> publishDesign(@PathVariable Long id, @RequestParam Long userId) {
+    public Result<ArtifactEntity> publishDesign(@PathVariable Long id) {
+        Long userId = StpUtil.getLoginIdAsLong();
         log.info("发布设计: id={}, userId={}", id, userId);
         ArtifactEntity published = artifactService.publishDesign(id, userId);
         return Result.success(published);
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> deleteDesign(@PathVariable Long id, @RequestParam Long userId) {
+    public Result<Void> deleteDesign(@PathVariable Long id) {
+        Long userId = StpUtil.getLoginIdAsLong();
         log.info("删除设计: id={}, userId={}", id, userId);
         artifactService.deleteDesign(id, userId);
         return Result.success(null);
