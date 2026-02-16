@@ -7,9 +7,13 @@ import heritage.gen.modules.design.model.GenerateDesignRequest;
 import heritage.gen.modules.design.model.SaveDesignRequest;
 import heritage.gen.modules.design.service.AiDesignService;
 import heritage.gen.modules.design.service.ArtifactService;
+import heritage.gen.modules.design.service.PdfExportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +27,7 @@ public class DesignController {
 
     private final AiDesignService designService;
     private final ArtifactService artifactService;
+    private final PdfExportService pdfExportService;
 
     @PostMapping("/generate/concept")
     public Result<DesignProject> generateConcept(@Valid @RequestBody GenerateDesignRequest request) {
@@ -92,5 +97,24 @@ public class DesignController {
                 .map(artifactService::convertToDesignProject)
                 .collect(Collectors.toList());
         return Result.success(projects);
+    }
+
+    @GetMapping("/{id}/export-pdf")
+    public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
+        log.info("导出PDF: id={}", id);
+        ArtifactEntity entity = artifactService.getDesignById(id);
+        if (entity == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        byte[] pdfData = pdfExportService.generateDesignPdf(entity);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", entity.getDesignName() + "_设计提案.pdf");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfData);
     }
 }

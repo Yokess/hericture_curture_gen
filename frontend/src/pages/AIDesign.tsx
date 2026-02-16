@@ -113,6 +113,41 @@ export default function AIDesign() {
         }
     };
 
+    const handleExportPdf = async () => {
+        // 确保有保存的设计ID
+        let designId = currentDesignId;
+        if (!designId && project) {
+            await handleSaveDesign();
+            // 重新获取设计列表以获取ID
+            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            const designs = res.data || [];
+            const latest = designs[0];
+            if (latest) {
+                designId = parseInt(latest.id);
+            }
+        }
+
+        if (!designId) {
+            alert('请先生成并保存设计');
+            return;
+        }
+
+        try {
+            const blob = await designApi.exportPdf(designId);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${project?.conceptName || '设计提案'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('导出PDF失败:', err);
+            alert('导出PDF失败，请重试');
+        }
+    };
+
     const handleNewDesign = () => {
         setStep('input');
         setIdea('');
@@ -437,7 +472,7 @@ export default function AIDesign() {
                                             <Save className="w-4 h-4 mr-2" /> 
                                             {isSaved ? '已保存' : '保存设计'}
                                         </Button>
-                                        <Button variant="outline">
+                                        <Button variant="outline" onClick={handleExportPdf}>
                                             <Download className="w-4 h-4 mr-2" /> 导出方案
                                         </Button>
                                         <Button className="bg-[#8B4513]" onClick={handlePublishDesign}>

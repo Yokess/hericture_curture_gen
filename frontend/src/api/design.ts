@@ -1,5 +1,6 @@
 import axiosInstance from '@/utils/request';
 import { DesignProject } from '@/types/design';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 export const designApi = {
     generateConcept: (data: { idea: string; useRag?: boolean }) => {
@@ -40,5 +41,17 @@ export const designApi = {
 
     getPublishedDesigns: () => {
         return axiosInstance.get<any, { data: DesignProject[] }>('/api/design/public');
+    },
+
+    exportPdf: (id: number) => {
+        const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+        const token = tokenStorage.getToken();
+        const url = `${baseURL}/api/design/${id}/export-pdf`;
+        
+        return fetch(url, {
+            headers: {
+                'Authorization': token || '',
+            }
+        }).then(res => res.blob());
     }
 };
