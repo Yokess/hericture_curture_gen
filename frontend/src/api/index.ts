@@ -4,7 +4,6 @@ import type {
     DesignArtifact,
     Video,
     VideoWithSteps,
-    CommunityPost,
     PostWithDetails,
     User,
     UserWithStats,
@@ -16,7 +15,6 @@ import {
     mockArtifacts,
     mockVideos,
     mockVideosWithSteps,
-    mockPosts,
     mockPostsWithDetails,
     mockUsers,
     mockUsersWithStats,
@@ -182,6 +180,7 @@ export const communityApi = {
      * 点赞帖子(模拟)
      */
     async likePost(postId: number): Promise<{ success: boolean }> {
+        void postId;
         await delay(150);
         return { success: true };
     },
@@ -190,6 +189,7 @@ export const communityApi = {
      * 收藏帖子(模拟)
      */
     async collectPost(postId: number): Promise<{ success: boolean }> {
+        void postId;
         await delay(150);
         return { success: true };
     },
@@ -198,6 +198,8 @@ export const communityApi = {
      * 发表评论(模拟)
      */
     async addComment(postId: number, content: string): Promise<{ success: boolean }> {
+        void postId;
+        void content;
         await delay(200);
         return { success: true };
     },

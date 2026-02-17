@@ -1,6 +1,8 @@
 package heritage.gen.modules.design.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import heritage.gen.common.exception.BusinessException;
+import heritage.gen.common.exception.ErrorCode;
 import heritage.gen.common.result.Result;
 import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignProject;
@@ -60,6 +62,12 @@ public class DesignController {
     @PostMapping("/save")
     public Result<ArtifactEntity> saveDesign(@RequestBody SaveDesignRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
+        if (request == null || request.getProject() == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "保存请求参数不完整");
+        }
+        if (request.getUserId() != null && !request.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "禁止伪造用户身份");
+        }
         log.info("收到保存设计请求: userId={}, designName={}", userId, request.getProject().getConceptName());
         ArtifactEntity saved = artifactService.saveDesign(userId, request.getProject(), request.getUserIdea(), request.getChatHistory());
         return Result.success(saved);
@@ -79,7 +87,8 @@ public class DesignController {
     @GetMapping("/{id}")
     public Result<DesignProject> getDesignById(@PathVariable Long id) {
         log.info("获取设计详情: id={}", id);
-        DesignProject project = artifactService.convertToDesignProject(artifactService.getDesignById(id));
+        Long userId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
+        DesignProject project = artifactService.convertToDesignProject(artifactService.getDesignForRead(id, userId));
         return Result.success(project);
     }
 
@@ -111,12 +120,26 @@ public class DesignController {
     @GetMapping("/{id}/export-pdf")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
         log.info("导出PDF: id={}", id);
+        if (!StpUtil.isLogin()) {
+            return ResponseEntity.status(401).build();
+        }
+        Long userId = StpUtil.getLoginIdAsLong();
         ArtifactEntity entity = artifactService.getDesignById(id);
         if (entity == null) {
             return ResponseEntity.notFound().build();
         }
+        boolean readable = "PUBLISHED".equals(entity.getStatus()) || userId.equals(entity.getUserId());
+        if (!readable) {
+            return ResponseEntity.status(403).build();
+        }
         // 1. 生成 PDF 二进制数据
-        byte[] pdfData = pdfExportService.generateDesignPdf(entity);
+        byte[] pdfData;
+        try {
+            pdfData = pdfExportService.generateDesignPdf(entity);
+        } catch (Exception e) {
+            log.error("PDF生成失败: id={}", id, e);
+            return ResponseEntity.status(500).build();
+        }
         // 2. 处理文件名编码
         String rawFileName = (entity.getDesignName() != null ? entity.getDesignName() : "设计") + "_设计提案.pdf";
         String encodedFileName = "design_proposal.pdf"; // 默认兜底文件名
@@ -138,6 +161,9 @@ public class DesignController {
 
     @PostMapping("/generate/analysis")
     public Result<Map<String, Object>> generateAnalysis(@RequestBody GenerateDesignRequest request) {
+        if (request == null || request.getConcept() == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "缺少 concept 参数");
+        }
         log.info("收到生成分析报告请求: conceptName={}", request.getConcept().getConceptName());
         
         Map<String, Object> analysis = new java.util.HashMap<>();
@@ -159,8 +185,9 @@ public class DesignController {
 
     @PostMapping("/{id}/analysis")
     public Result<ArtifactEntity> saveAnalysis(@PathVariable Long id, @RequestBody Map<String, Object> analysis) {
+        Long userId = StpUtil.getLoginIdAsLong();
         log.info("保存分析报告: id={}", id);
-        ArtifactEntity entity = artifactService.saveAnalysis(id, analysis);
+        ArtifactEntity entity = artifactService.saveAnalysis(id, userId, analysis);
         return Result.success(entity);
     }
 }

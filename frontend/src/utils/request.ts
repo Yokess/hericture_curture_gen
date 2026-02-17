@@ -33,6 +33,10 @@ axiosInstance.interceptors.request.use(
  */
 axiosInstance.interceptors.response.use(
     (response: AxiosResponse) => {
+        const responseType = response.config?.responseType;
+        if (responseType === 'blob' || responseType === 'arraybuffer') {
+            return response.data;
+        }
         // 如果后端返回的是统一格式 { code, message, data }
         const { code, message } = response.data;
 

@@ -43,6 +43,7 @@ export interface UserProfile {
     id: number;
     username: string;
     nickname: string;
+    isAdmin?: boolean;
     avatarUrl?: string;
     email?: string;
     phone?: string;

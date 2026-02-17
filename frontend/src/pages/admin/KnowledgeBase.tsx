@@ -16,7 +16,6 @@ import {
     MessageSquare,
     FolderOpen,
     Tag,
-    Eye,
     Filter,
     SortAsc,
     Info,

@@ -31,8 +31,6 @@ import {
     X,
     CheckCircle2,
     Loader2,
-    Copy,
-    Share2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

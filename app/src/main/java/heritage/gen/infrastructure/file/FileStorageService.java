@@ -11,7 +11,12 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -101,10 +106,15 @@ public class FileStorageService {
      */
     public String uploadFromUrl(String imageUrl, String prefix) {
         try {
-            java.net.URL url = new java.net.URL(imageUrl);
-            java.net.URLConnection conn = url.openConnection();
+            URL url = validateRemoteUrl(imageUrl);
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(15000);
             long contentLength = conn.getContentLengthLong();
             String contentType = conn.getContentType();
+            if (contentLength > 0 && contentLength > 20L * 1024 * 1024) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "远程文件过大");
+            }
             
             // 简单的文件名提取
             String originalFilename = "remote_image.png";
@@ -140,7 +150,7 @@ public class FileStorageService {
                  // 如果 content length 未知，需要先读取到内存或者临时文件获取大小，
                  // 这里简单处理：如果 contentLength < 0，尝试读取到 byte array
                  if (contentLength < 0) {
-                     byte[] bytes = in.readAllBytes();
+                     byte[] bytes = readAllBytesWithLimit(in, 20L * 1024 * 1024);
                      putRequest = putRequest.toBuilder().contentLength((long) bytes.length).build();
                      s3Client.putObject(putRequest, RequestBody.fromBytes(bytes));
                  } else {
@@ -263,6 +273,14 @@ public class FileStorageService {
         return String.format("%s/%s/%s", storageConfig.getEndpoint(), storageConfig.getBucket(), fileKey);
     }
 
+    public boolean isStoredObjectUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return false;
+        }
+        String prefix = String.format("%s/%s/", storageConfig.getEndpoint(), storageConfig.getBucket());
+        return url.startsWith(prefix);
+    }
+
     /**
      * 确保存储桶存在
      */
@@ -300,5 +318,99 @@ public class FileStorageService {
         if (filename == null)
             return "unknown";
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    private URL validateRemoteUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "URL不能为空");
+        }
+        URI uri;
+        try {
+            uri = URI.create(rawUrl.trim());
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "URL格式不合法");
+        }
+        String scheme = uri.getScheme();
+        if (scheme == null || (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "仅支持 http/https URL");
+        }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "URL缺少host");
+        }
+        if (isBlockedHost(host)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "禁止访问该URL");
+        }
+        try {
+            for (InetAddress addr : InetAddress.getAllByName(host)) {
+                if (isBlockedAddress(addr)) {
+                    throw new BusinessException(ErrorCode.FORBIDDEN, "禁止访问该URL");
+                }
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "URL解析失败");
+        }
+        try {
+            return uri.toURL();
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "URL格式不合法");
+        }
+    }
+
+    private boolean isBlockedHost(String host) {
+        String h = host.toLowerCase();
+        if ("localhost".equals(h) || h.endsWith(".localhost")) {
+            return true;
+        }
+        if (h.endsWith(".local") || h.endsWith(".internal")) {
+            return true;
+        }
+        if ("metadata.google.internal".equals(h)) {
+            return true;
+        }
+        if ("169.254.169.254".equals(h)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isBlockedAddress(InetAddress addr) {
+        if (addr.isAnyLocalAddress()
+                || addr.isLoopbackAddress()
+                || addr.isLinkLocalAddress()
+                || addr.isSiteLocalAddress()
+                || addr.isMulticastAddress()) {
+            return true;
+        }
+        byte[] b = addr.getAddress();
+        if (b.length == 4) {
+            int b0 = b[0] & 0xFF;
+            int b1 = b[1] & 0xFF;
+            if (b0 == 0) return true;
+            if (b0 == 10) return true;
+            if (b0 == 127) return true;
+            if (b0 == 169 && b1 == 254) return true;
+            if (b0 == 172 && (b1 >= 16 && b1 <= 31)) return true;
+            if (b0 == 192 && b1 == 168) return true;
+            if (b0 == 100 && (b1 >= 64 && b1 <= 127)) return true;
+        }
+        return false;
+    }
+
+    private byte[] readAllBytesWithLimit(java.io.InputStream in, long limit) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        long total = 0;
+        int n;
+        while ((n = in.read(buf)) >= 0) {
+            total += n;
+            if (total > limit) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "远程文件过大");
+            }
+            out.write(buf, 0, n);
+        }
+        return out.toByteArray();
     }
 }

@@ -129,8 +129,20 @@ public class AiDesignService {
         log.info("开始生成效果图: conceptName={}, blueprintUrl={}",
                 request.getConcept().getConceptName(), request.getBlueprintUrl());
         try {
+            if (request.getBlueprintUrl() == null || request.getBlueprintUrl().isBlank()) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "缺少 blueprintUrl");
+            }
+
+            String storedBlueprintUrl = request.getBlueprintUrl();
+            if (!fileStorageService.isStoredObjectUrl(storedBlueprintUrl)) {
+                storedBlueprintUrl = getShortRefUrl(storedBlueprintUrl);
+            }
+            if (!fileStorageService.isStoredObjectUrl(storedBlueprintUrl)) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "blueprintUrl不合法");
+            }
+
             // 如果提供了草图 URL，则使用图生图模式
-            String renderUrl = generateProductShot(request.getConcept(), request.getBlueprintUrl());
+            String renderUrl = generateProductShot(request.getConcept(), storedBlueprintUrl);
             // 转存到MinIO
             String storedUrl = getShortRefUrl(renderUrl);
             log.info("效果图已转存到MinIO: {}", storedUrl);
@@ -234,15 +246,10 @@ public class AiDesignService {
             return null;
         }
 
-        try {
-            log.info("开始转存参考图，原URL长度: {}", originalUrl.length());
-            String shortUrl = fileStorageService.uploadFromUrl(originalUrl, "design-refs");
-            log.info("参考图转存成功，新URL: {}", shortUrl);
-            return shortUrl;
-        } catch (Exception e) {
-            log.error("参考图转存失败，将尝试使用原URL (风险: 可能因长度过长失败)", e);
-            return originalUrl;
-        }
+        log.info("开始转存参考图，原URL长度: {}", originalUrl.length());
+        String shortUrl = fileStorageService.uploadFromUrl(originalUrl, "design-refs");
+        log.info("参考图转存成功，新URL: {}", shortUrl);
+        return shortUrl;
     }
 
     /**
@@ -253,10 +260,17 @@ public class AiDesignService {
             return null;
         }
 
+        if (!fileStorageService.isStoredObjectUrl(minioUrl)) {
+            return null;
+        }
+
         try {
             log.info("从MinIO下载参考图: {}", minioUrl);
             Path tempFile = Files.createTempFile("minio_ref_", ".png");
-            try (var in = URI.create(minioUrl).toURL().openStream()) {
+            java.net.URLConnection conn = URI.create(minioUrl).toURL().openConnection();
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(15000);
+            try (var in = conn.getInputStream()) {
                 Files.copy(in, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
             String fileUri = tempFile.toUri().toString();
@@ -275,17 +289,9 @@ public class AiDesignService {
         log.info("正在生成产品效果图 (使用 wan2.6-image 图生图, 参考图: {})...",
                 blueprintUrl != null ? "有" : "无");
 
-        // 先将草图转存到MinIO（如果是DashScope临时URL）
-        String storedBlueprintUrl = blueprintUrl;
-        if (blueprintUrl != null && blueprintUrl.contains("dashscope")) {
-            storedBlueprintUrl = getShortRefUrl(blueprintUrl);
-        }
-
         // 下载到临时文件供DashScope使用
         String tempFileUrl = null;
-        if (storedBlueprintUrl != null) {
-            tempFileUrl = downloadMinioImageToTemp(storedBlueprintUrl);
-        }
+        tempFileUrl = downloadMinioImageToTemp(blueprintUrl);
 
         String prompt = String.format(
                 "专业工业设计产品摄影，主体：%s，" +

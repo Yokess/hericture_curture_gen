@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
-import { Bot, User, Book, Loader2, Send, Boxes, MessageSquare, Plus, ExternalLink, Search, Edit3, Trash2, MoreVertical } from 'lucide-react';
+import { Bot, User, Book, Loader2, Send, Boxes, MessageSquare, Plus, ExternalLink, Search, Edit3, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/home/StatCard';

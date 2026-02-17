@@ -1,5 +1,9 @@
 package heritage.gen.modules.design.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import heritage.gen.common.exception.BusinessException;
+import heritage.gen.common.exception.ErrorCode;
 import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignConcept;
 import heritage.gen.modules.design.model.DesignProject;
@@ -9,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +25,7 @@ import java.util.stream.Collectors;
 public class ArtifactService {
 
     private final ArtifactRepository artifactRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ArtifactEntity saveDesign(Long userId, DesignProject project, String userIdea, java.util.List<java.util.Map<String, String>> chatHistory) {
@@ -90,14 +96,28 @@ public class ArtifactService {
         return artifactRepository.findByIdActive(id);
     }
 
+    public ArtifactEntity getDesignForRead(Long id, Long userId) {
+        ArtifactEntity entity = artifactRepository.findByIdActive(id);
+        if (entity == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
+        }
+        if ("PUBLISHED".equals(entity.getStatus())) {
+            return entity;
+        }
+        if (userId != null && userId.equals(entity.getUserId())) {
+            return entity;
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN, "无权限访问该设计");
+    }
+
     @Transactional
     public ArtifactEntity publishDesign(Long id, Long userId) {
         ArtifactEntity entity = artifactRepository.findByIdActive(id);
         if (entity == null) {
-            throw new RuntimeException("设计不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
         }
         if (!entity.getUserId().equals(userId)) {
-            throw new RuntimeException("无权限操作");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作");
         }
         entity.setStatus("PUBLISHED");
         return artifactRepository.save(entity);
@@ -107,10 +127,10 @@ public class ArtifactService {
     public void deleteDesign(Long id, Long userId) {
         ArtifactEntity entity = artifactRepository.findByIdActive(id);
         if (entity == null) {
-            throw new RuntimeException("设计不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
         }
         if (!entity.getUserId().equals(userId)) {
-            throw new RuntimeException("无权限操作");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作");
         }
         entity.setIsDeleted(true);
         artifactRepository.save(entity);
@@ -141,19 +161,22 @@ public class ArtifactService {
             project.setFormFactor((String) data.get("formFactor"));
             project.setDimensions((String) data.get("dimensions"));
             project.setUserInteraction((String) data.get("userInteraction"));
-            project.setMaterials((List<DesignConcept.Material>) data.get("materials"));
-            project.setColors((List<DesignConcept.Color>) data.get("colors"));
-            project.setKeyFeatures((List<String>) data.get("keyFeatures"));
+            project.setMaterials(convertList(data.get("materials"), new TypeReference<List<DesignConcept.Material>>() {}));
+            project.setColors(convertList(data.get("colors"), new TypeReference<List<DesignConcept.Color>>() {}));
+            project.setKeyFeatures(convertList(data.get("keyFeatures"), new TypeReference<List<String>>() {}));
         }
 
         return project;
     }
 
     @Transactional
-    public ArtifactEntity saveAnalysis(Long id, Map<String, Object> analysis) {
+    public ArtifactEntity saveAnalysis(Long id, Long userId, Map<String, Object> analysis) {
         ArtifactEntity entity = artifactRepository.findByIdActive(id);
         if (entity == null) {
-            throw new RuntimeException("设计不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
+        }
+        if (!entity.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作");
         }
         
         if (analysis.containsKey("marketAnalysis")) {
@@ -167,5 +190,19 @@ public class ArtifactService {
         }
         
         return artifactRepository.save(entity);
+    }
+
+    private <T> List<T> convertList(Object value, TypeReference<List<T>> typeRef) {
+        if (value == null) {
+            return new ArrayList<>();
+        }
+        if (value instanceof List<?> list && list.isEmpty()) {
+            return new ArrayList<>();
+        }
+        try {
+            return objectMapper.convertValue(value, typeRef);
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<>();
+        }
     }
 }

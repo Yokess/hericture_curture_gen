@@ -62,7 +62,7 @@ export function useAuth(): UseAuthReturn {
                         id: currentUser.id,
                         username: currentUser.username,
                         nickname: currentUser.nickname,
-                        isAdmin: currentUser.isAdmin || false,
+                        isAdmin: currentUser.isAdmin ?? false,
                         avatarUrl: currentUser.avatarUrl,
                     });
                 } else {

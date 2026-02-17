@@ -36,13 +36,13 @@ export default function AIDesign() {
             const user = authApi.getLocalUser();
             if (user) {
                 setUserId(user.id);
-                loadUserDesigns(user.id);
+                loadUserDesigns();
             }
         };
         fetchUser();
     }, []);
 
-    const loadUserDesigns = async (uid: number) => {
+    const loadUserDesigns = async () => {
         try {
             const res = await designApi.getMyDesigns();
             setSavedDesigns(res.data || []);
@@ -213,7 +213,7 @@ const handleGenerateConcept = async () => {
             
             setIsSaved(true);
             alert('设计已保存到您的作品库');
-            loadUserDesigns(userId);
+            loadUserDesigns();
         } catch (err) {
             console.error(err);
             alert('保存失败，请重试');
@@ -255,7 +255,7 @@ const handleGenerateConcept = async () => {
             if (analysis) {
                 await designApi.saveAnalysis(designId, analysis);
                 alert('分析报告已生成并保存！\n\n请再次点击"导出方案"下载包含完整专业报告的PDF。');
-                loadUserDesigns(userId);
+                loadUserDesigns();
             }
         } catch (err) {
             console.error('生成分析失败:', err);

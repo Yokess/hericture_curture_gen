@@ -92,6 +92,9 @@ export const generateOrEditImage = async (
     base64Data?: string,
     mimeType?: string
 ): Promise<string> => {
+    void prompt;
+    void base64Data;
+    void mimeType;
     // 暂时仍返回 Mock 图片，因为后端 generateDesign 已经一次性返回了图片
     // 如果需要单独生成图片，需要在后端添加单独的 image generation 接口
     console.warn('generateOrEditImage 目前仅作为占位符，实际图片由 translateToDesignConcept 返回');
