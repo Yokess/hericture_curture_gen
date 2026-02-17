@@ -23,20 +23,20 @@ export const designApi = {
         return axiosInstance.post<any, { data: any }>('/api/design/save', data);
     },
 
-    getUserDesigns: (userId: number) => {
-        return axiosInstance.get<any, { data: DesignProject[] }>(`/api/design/user/${userId}`);
+    getMyDesigns: () => {
+        return axiosInstance.get<any, { data: DesignProject[] }>('/api/design/list');
     },
 
     getDesignById: (id: number) => {
         return axiosInstance.get<any, { data: DesignProject }>(`/api/design/${id}`);
     },
 
-    publishDesign: (id: number, userId: number) => {
-        return axiosInstance.post<any, { data: any }>(`/api/design/${id}/publish?userId=${userId}`, {});
+    publishDesign: (id: number) => {
+        return axiosInstance.post<any, { data: any }>(`/api/design/${id}/publish`);
     },
 
-    deleteDesign: (id: number, userId: number) => {
-        return axiosInstance.delete<any, { data: void }>(`/api/design/${id}?userId=${userId}`);
+    deleteDesign: (id: number) => {
+        return axiosInstance.delete<any, { data: void }>(`/api/design/${id}`);
     },
 
     getPublishedDesigns: () => {

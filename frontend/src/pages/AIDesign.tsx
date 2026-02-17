@@ -53,7 +53,7 @@ export default function AIDesign() {
 
     const loadUserDesigns = async () => {
         try {
-            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            const res = await designApi.getMyDesigns();
             console.log('API响应:', res);
             const designs = res.data || [];
             console.log('设计列表:', designs);
@@ -103,7 +103,7 @@ export default function AIDesign() {
         setIsProcessing(true);
         try {
             // 重新获取最新的设计列表以获取ID
-            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            const res = await designApi.getMyDesigns();
             const designs = res.data || [];
             const latest = designs.find((d: DesignProject) => d.conceptName === project.conceptName);
             
@@ -112,7 +112,7 @@ export default function AIDesign() {
                 return;
             }
             
-            const designId = parseInt(latest.id);
+            const designId = parseInt(latest.id!);
             
             // 生成分析报告
             alert('正在生成市场分析、技术可行性和风险评估报告，请稍候...');
@@ -139,7 +139,7 @@ export default function AIDesign() {
         setIdea(savedProject.designPhilosophy || '');
         setBlueprintImg(savedProject.blueprintUrl || null);
         setProductImg(savedProject.productShotUrl || null);
-        setCurrentDesignId(parseInt(savedProject.id));
+        setCurrentDesignId(parseInt(savedProject.id!));
         setStep(savedProject.productShotUrl ? 'render' : savedProject.blueprintUrl ? 'blueprint' : 'concept');
         setShowHistory(false);
         setIsSaved(true);
@@ -155,7 +155,7 @@ export default function AIDesign() {
         
         if (currentDesignId) {
             try {
-                await designApi.publishDesign(currentDesignId, MOCK_USER_ID);
+                await designApi.publishDesign(currentDesignId);
                 alert('设计已发布到社区!');
             } catch (err) {
                 alert('发布失败，请重试');
@@ -169,11 +169,11 @@ export default function AIDesign() {
         if (!designId && project) {
             await handleSaveDesign();
             // 重新获取设计列表以获取ID
-            const res = await designApi.getUserDesigns(MOCK_USER_ID);
+            const res = await designApi.getMyDesigns();
             const designs = res.data || [];
             const latest = designs[0];
             if (latest) {
-                designId = parseInt(latest.id);
+                designId = parseInt(latest.id!);
             }
         }
 

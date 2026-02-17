@@ -9,7 +9,7 @@ export interface DesignColor {
 }
 
 export interface DesignProject {
-    id: string;
+    id?: string;
     conceptName: string;
     designPhilosophy: string;
     culturalContext: string;
