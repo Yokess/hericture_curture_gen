@@ -91,7 +91,7 @@ public class AiDesignService {
             }
 
             // 2. LLM 生成概念
-            DesignConcept concept = generateConcept(request.getIdea(), heritageContext);
+            DesignConcept concept = generateConcept(request.getIdea(), heritageContext, request.getChatHistory());
 
             String projectId = UUID.randomUUID().toString();
             // 仅返回概念，图片字段为 null
@@ -171,7 +171,7 @@ public class AiDesignService {
     /**
      * LLM 生成：基于创意和背景生成结构化方案
      */
-    private DesignConcept generateConcept(String idea, String context) {
+    private DesignConcept generateConcept(String idea, String context, List<Map<String, String>> chatHistory) {
         log.info("正在构思设计方案...");
 
         String systemPrompt = systemPromptTemplate.render();
@@ -179,11 +179,29 @@ public class AiDesignService {
         Map<String, Object> variables = new HashMap<>();
         variables.put("idea", idea);
         variables.put("context", context);
-        String userPrompt = userPromptTemplate.render(variables);
+        
+        // 构建包含历史对话的用户 Prompt
+        StringBuilder userPromptBuilder = new StringBuilder();
+        
+        if (chatHistory != null && !chatHistory.isEmpty()) {
+            userPromptBuilder.append("【历史对话上下文】\n");
+            for (Map<String, String> msg : chatHistory) {
+                String role = msg.get("role"); // "user" or "assistant"
+                String content = msg.get("content");
+                if (role != null && content != null) {
+                    userPromptBuilder.append(role.toUpperCase()).append(": ").append(content).append("\n");
+                }
+            }
+            userPromptBuilder.append("\n【当前请求】\n");
+        }
+        
+        userPromptBuilder.append(userPromptTemplate.render(variables));
+        
+        String finalUserPrompt = userPromptBuilder.toString();
 
         return chatClient.prompt()
                 .system(systemPrompt)
-                .user(userPrompt)
+                .user(finalUserPrompt)
                 .call()
                 .entity(DesignConcept.class); // 自动解析 JSON 到对象
     }

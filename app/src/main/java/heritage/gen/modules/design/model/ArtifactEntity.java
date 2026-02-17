@@ -44,9 +44,6 @@ public class ArtifactEntity {
     @Column(name = "selected_index")
     private Integer selectedIndex = 0;
 
-    @Column(name = "session_id")
-    private Long sessionId;
-
     @Column(name = "status", length = 20)
     private String status = "DRAFT";
 
@@ -56,9 +53,13 @@ public class ArtifactEntity {
     @Column(name = "like_count")
     private Integer likeCount = 0;
 
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "generation_metadata", columnDefinition = "jsonb")
-    private Map<String, Object> generationMetadata;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private java.util.Map<String, Object> generationMetadata;
+
+    @Column(name = "chat_history", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private java.util.List<java.util.Map<String, String>> chatHistory;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "market_analysis", columnDefinition = "jsonb")

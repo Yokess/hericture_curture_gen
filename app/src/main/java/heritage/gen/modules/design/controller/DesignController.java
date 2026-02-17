@@ -61,7 +61,7 @@ public class DesignController {
     public Result<ArtifactEntity> saveDesign(@RequestBody SaveDesignRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
         log.info("收到保存设计请求: userId={}, designName={}", userId, request.getProject().getConceptName());
-        ArtifactEntity saved = artifactService.saveDesign(userId, request.getProject(), request.getUserIdea());
+        ArtifactEntity saved = artifactService.saveDesign(userId, request.getProject(), request.getUserIdea(), request.getChatHistory());
         return Result.success(saved);
     }
 

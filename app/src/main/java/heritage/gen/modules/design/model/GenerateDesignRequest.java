@@ -16,4 +16,7 @@ public class GenerateDesignRequest {
     private String conceptId; // 已有概念 ID (用于后续步骤)
     private DesignConcept concept; // 已有概念对象 (用于生成图片)
     private String blueprintUrl; // 草图 URL (用于生成效果图)
+    
+    // 对话历史（用于多轮对话上下文）
+    private java.util.List<java.util.Map<String, String>> chatHistory;
 }

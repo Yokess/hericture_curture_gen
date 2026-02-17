@@ -22,48 +22,38 @@ public class ArtifactService {
     private final ArtifactRepository artifactRepository;
 
     @Transactional
-    public ArtifactEntity saveDesign(Long userId, DesignProject project, String userIdea) {
-        log.info("保存设计到数据库: userId={}, designName={}, projectId={}", userId, project.getConceptName(), project.getId());
-
-        ArtifactEntity entity;
+    public ArtifactEntity saveDesign(Long userId, DesignProject project, String userIdea, java.util.List<java.util.Map<String, String>> chatHistory) {
+        ArtifactEntity entity = null;
         
-        // 如果有ID，则更新现有记录
-        if (project.getId() != null && !project.getId().isEmpty()) {
+        // 如果是更新现有设计
+        if (project.getId() != null && !project.getId().isBlank()) {
             try {
                 Long id = Long.parseLong(project.getId());
-                entity = artifactRepository.findByIdActive(id);
-                if (entity != null && entity.getUserId().equals(userId)) {
-                    log.info("更新已有设计: id={}", id);
-                } else {
-                    entity = null;
-                }
-            } catch (Exception e) {
-                entity = null;
+                entity = artifactRepository.findById(id).orElse(null);
+            } catch (NumberFormatException e) {
+                // 新设计，忽略 ID
             }
-        } else {
-            entity = null;
         }
         
-        // 如果没有找到现有记录，创建新的
         if (entity == null) {
             entity = new ArtifactEntity();
-            entity.setUserId(userId);
-            entity.setStatus("DRAFT");
         }
 
+        entity.setUserId(userId);
         entity.setDesignName(project.getConceptName());
         entity.setDesignConcept(project.getDesignPhilosophy());
         entity.setBlueprintUrl(project.getBlueprintUrl());
         entity.setProductShotUrl(project.getProductShotUrl());
-
+        entity.setStatus("COMPLETED");
+        
         // 构建图片URLs数组
         List<String> imageUrls = new java.util.ArrayList<>();
         if (project.getBlueprintUrl() != null) imageUrls.add(project.getBlueprintUrl());
         if (project.getProductShotUrl() != null) imageUrls.add(project.getProductShotUrl());
         entity.setImageUrls(imageUrls.toArray(new String[0]));
         entity.setSelectedIndex(imageUrls.size() > 1 ? 1 : 0);
-
-        // 将 DesignConcept 转换为 Map 存储
+        
+        // 保存设计数据
         Map<String, Object> conceptData = new HashMap<>();
         conceptData.put("conceptName", project.getConceptName());
         conceptData.put("designPhilosophy", project.getDesignPhilosophy());
@@ -75,6 +65,19 @@ public class ArtifactService {
         conceptData.put("colors", project.getColors());
         conceptData.put("keyFeatures", project.getKeyFeatures());
         entity.setConceptData(conceptData);
+        
+        // 保存元数据
+        if (entity.getGenerationMetadata() == null) {
+            entity.setGenerationMetadata(new HashMap<>());
+        }
+        if (userIdea != null) {
+            entity.getGenerationMetadata().put("userIdea", userIdea);
+        }
+        
+        // 保存对话历史
+        if (chatHistory != null && !chatHistory.isEmpty()) {
+            entity.setChatHistory(chatHistory);
+        }
 
         return artifactRepository.save(entity);
     }
