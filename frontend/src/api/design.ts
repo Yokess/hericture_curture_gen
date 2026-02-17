@@ -3,7 +3,7 @@ import { DesignProject } from '@/types/design';
 import { tokenStorage } from '@/utils/tokenStorage';
 
 export const designApi = {
-    generateConcept: (data: { idea: string; useRag?: boolean }) => {
+    generateConcept: (data: { idea: string; useRag?: boolean; chatHistory?: Array<{ role: string; content: string }> }) => {
         return axiosInstance.post<any, { data: DesignProject }>('/api/design/generate/concept', data);
     },
 
@@ -19,7 +19,7 @@ export const designApi = {
         return axiosInstance.post<any, { data: DesignProject }>('/api/design/generate', data);
     },
 
-    saveDesign: (data: { userId: number; project: DesignProject; userIdea: string }) => {
+    saveDesign: (data: { userId: number; project: DesignProject; userIdea: string; chatHistory?: Array<{ role: string; content: string }> }) => {
         return axiosInstance.post<any, { data: any }>('/api/design/save', data);
     },
 

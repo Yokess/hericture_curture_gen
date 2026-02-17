@@ -2,11 +2,15 @@ import { designApi } from '@/api/design';
 import { DesignProject } from '@/types/design';
 
 // 1. 仅生成概念 (Concept)
-export const generateConceptOnly = async (idea: string): Promise<DesignProject> => {
+export const generateConceptOnly = async (
+    idea: string,
+    chatHistory: Array<{ role: string; content: string }> = []
+): Promise<DesignProject> => {
     try {
         const response = await designApi.generateConcept({ 
             idea,
-            useRag: true 
+            useRag: true,
+            chatHistory
         });
 
         // 调试日志
