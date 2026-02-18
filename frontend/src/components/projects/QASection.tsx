@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
-import { Bot, User, Book, Loader2, Send, Boxes, MessageSquare, Plus, ExternalLink, Search, Edit3, Trash2 } from 'lucide-react';
+import { Bot, Book, Loader2, Send, Boxes, MessageSquare, Plus, ExternalLink, Search, Edit3, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/home/StatCard';
@@ -8,8 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ragChatApi, type MessageDTO, type SessionDetailDTO, type SessionListItemDTO } from '@/api/ragchat';
 import { knowledgebaseApi } from '@/api/knowledgebase';
+import { Markdown } from '@/components/common/Markdown';
+import { useAuth } from '@/hooks/useAuth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function QASection() {
+    const { user: currentUser } = useAuth();
     const [sessions, setSessions] = useState<SessionListItemDTO[]>([]);
     const [currentSession, setCurrentSession] = useState<SessionDetailDTO | null>(null);
     const [messages, setMessages] = useState<MessageDTO[]>([]);
@@ -265,6 +269,7 @@ export function QASection() {
     // 渲染消息
     const renderMessage = (message: MessageDTO) => {
         const isUser = message.type === 'user';
+        const avatarText = (currentUser?.nickname || currentUser?.username || 'U').slice(0, 1).toUpperCase();
 
         // 1. 获取该条消息实际引用的知识库 ID 列表 (后端返回的字段)
         // 如果字段不存在(旧数据)或为空，给一个空数组
@@ -277,13 +282,18 @@ export function QASection() {
 
         return (
             <div key={message.id} className={`flex items-start space-x-4 ${isUser ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isUser
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600'
-                        : 'bg-gradient-to-br from-[#8B4513] to-[#D4AF37]'
-                }`}>
-                    {isUser ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
-                </div>
+                {isUser ? (
+                    <Avatar className="w-10 h-10 flex-shrink-0 ring-1 ring-black/5">
+                        <AvatarImage src={currentUser?.avatarUrl || undefined} alt={currentUser?.nickname || currentUser?.username || '用户'} />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                            {avatarText}
+                        </AvatarFallback>
+                    </Avatar>
+                ) : (
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#8B4513] to-[#D4AF37]">
+                        <Bot className="w-5 h-5 text-white" />
+                    </div>
+                )}
                 <div className="flex-1">
                     <Card className={`rounded-2xl ${
                         isUser
@@ -291,7 +301,7 @@ export function QASection() {
                             : 'bg-white rounded-tl-none shadow-sm'
                     }`}>
                         <div className="p-4">
-                            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                            <Markdown content={message.content} />
 
                             {/* AI回答显示知识来源 */}
                             {/* 修正判定条件：!isUser (是AI) 且 relatedKbs 有值时才显示 */}
@@ -595,7 +605,7 @@ export function QASection() {
                                 <div className="flex-1">
                                     <Card className="bg-white rounded-2xl rounded-tl-none shadow-sm">
                                         <div className="p-4">
-                                            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{streamingContent}</p>
+                                            <Markdown content={streamingContent} />
                                             <div className="mt-2 flex items-center space-x-1">
                                                 <div className="w-2 h-2 bg-[#8B4513] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                                                 <div className="w-2 h-2 bg-[#8B4513] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
