@@ -5,6 +5,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import AIDesign from './pages/AIDesign';
 import VideoArchive from './pages/VideoArchive';
 import Community from './pages/Community';
+import CommunityPostDetail from './pages/CommunityPostDetail';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -24,6 +25,7 @@ function App() {
         <Route path="/ai-design" element={<AIDesign />} />
         <Route path="/video-archive" element={<VideoArchive />} />
         <Route path="/community" element={<Community />} />
+        <Route path="/community/:id" element={<CommunityPostDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
 

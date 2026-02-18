@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { designApi } from '@/api/design'; // 统一使用 designApi
 import { authApi } from '@/api/auth';
+import { communityApi } from '@/api/community';
 import { DesignProject } from '@/types/design';
 
 // 引入拆分的子组件
@@ -311,6 +312,16 @@ const handleGenerateConcept = async () => {
         }
         try {
             await designApi.publishDesign(currentDesignId);
+            try {
+                await communityApi.createPost({
+                    artifactId: currentDesignId,
+                    title: project?.conceptName || undefined,
+                    content: project?.designPhilosophy || undefined,
+                    tags: project?.keyFeatures?.slice(0, 6) || undefined,
+                });
+            } catch (e) {
+                console.error('创建社区帖子失败:', e);
+            }
             alert('设计已发布到社区!');
         } catch (err) {
             alert('发布失败，请重试');
