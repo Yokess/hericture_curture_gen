@@ -56,4 +56,19 @@ public interface IchProjectRepository
      */
     @Query("SELECT DISTINCT p.location FROM IchProjectEntity p WHERE p.location IS NOT NULL ORDER BY p.location")
     List<String> findAllLocations();
+
+    interface CategoryCount {
+        String getCategory();
+        Long getCnt();
+    }
+
+    @Query(value = """
+            select coalesce(nullif(trim(category), ''), '未分类') as category,
+                   count(1) as cnt
+            from ich_projects
+            group by coalesce(nullif(trim(category), ''), '未分类')
+            order by cnt desc
+            limit :limit
+            """, nativeQuery = true)
+    List<CategoryCount> listCategoryStats(@Param("limit") int limit);
 }

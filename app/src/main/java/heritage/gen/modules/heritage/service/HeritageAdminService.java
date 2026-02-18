@@ -4,6 +4,7 @@ import heritage.gen.common.exception.BusinessException;
 import heritage.gen.common.exception.ErrorCode;
 import heritage.gen.modules.heritage.model.IchProjectEntity;
 import heritage.gen.modules.heritage.model.IchSuccessorEntity;
+import heritage.gen.modules.heritage.model.ProjectCategoryStatDTO;
 import heritage.gen.modules.heritage.repository.IchProjectRepository;
 import heritage.gen.modules.heritage.repository.IchSuccessorRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,13 @@ public class HeritageAdminService {
         };
 
         return projectRepository.findAll(spec, pageable);
+    }
+
+    public List<ProjectCategoryStatDTO> listProjectCategoryStats(int limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+        return projectRepository.listCategoryStats(safeLimit).stream()
+                .map(x -> new ProjectCategoryStatDTO(x.getCategory(), x.getCnt()))
+                .toList();
     }
 
     /**

@@ -29,6 +29,11 @@ export interface PageResult<T> {
     size: number;
 }
 
+export interface ProjectCategoryStat {
+    category: string;
+    count: number;
+}
+
 // ========== API 方法 ==========
 
 export const adminApi = {
@@ -77,6 +82,13 @@ export const adminApi = {
         category?: string;
     }): Promise<PageResult<HeritageProject>> {
         const response = await request.get<any, Result<PageResult<HeritageProject>>>('/api/admin/heritage/projects', { params });
+        return response.data;
+    },
+
+    async listHeritageProjectCategoryStats(limit?: number): Promise<ProjectCategoryStat[]> {
+        const response = await request.get<any, Result<ProjectCategoryStat[]>>('/api/admin/heritage/projects/category-stats', {
+            params: { limit: limit ?? 8 }
+        });
         return response.data;
     },
 

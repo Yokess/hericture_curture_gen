@@ -4,10 +4,13 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import heritage.gen.common.result.Result;
 import heritage.gen.modules.heritage.model.IchProjectEntity;
 import heritage.gen.modules.heritage.model.IchSuccessorEntity;
+import heritage.gen.modules.heritage.model.ProjectCategoryStatDTO;
 import heritage.gen.modules.heritage.service.HeritageAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/heritage")
@@ -26,6 +29,11 @@ public class HeritageAdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return Result.success(adminService.listProjects(keyword, category, page, size));
+    }
+
+    @GetMapping("/projects/category-stats")
+    public Result<List<ProjectCategoryStatDTO>> categoryStats(@RequestParam(defaultValue = "8") int limit) {
+        return Result.success(adminService.listProjectCategoryStats(limit));
     }
 
     @PostMapping("/projects")
