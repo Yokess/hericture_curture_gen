@@ -76,6 +76,11 @@ dashscope:
 
 # Application custom configuration
 app:
+  # 技艺数字化档案（F3）配置
+  archive:
+    ffmpeg-path: ${FFMPEG_PATH:ffmpeg}  # FFmpeg 可执行路径，需提前安装
+    vision-model: ${ARCHIVE_VISION_MODEL:qwen-vl-max}  # 工序识别视觉模型
+
   # 对象存储配置（MinIO/S3兼容）
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}

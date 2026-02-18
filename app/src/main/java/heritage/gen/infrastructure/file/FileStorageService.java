@@ -75,6 +75,29 @@ public class FileStorageService {
     }
 
     /**
+     * 上传字节数组到指定 key
+     *
+     * @param fileKey     存储键
+     * @param bytes       文件内容
+     * @param contentType MIME 类型
+     */
+    public void uploadBytes(String fileKey, byte[] bytes, String contentType) {
+        try {
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(storageConfig.getBucket())
+                    .key(fileKey)
+                    .contentType(contentType != null ? contentType : "application/octet-stream")
+                    .contentLength((long) bytes.length)
+                    .build();
+            s3Client.putObject(putRequest, RequestBody.fromBytes(bytes));
+            log.debug("字节上传成功: {}", fileKey);
+        } catch (S3Exception e) {
+            log.error("上传字节到存储失败: {} - {}", fileKey, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.STORAGE_UPLOAD_FAILED, "文件存储失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 下载文件（通用方法）
      *
      * @param fileKey 文件存储键

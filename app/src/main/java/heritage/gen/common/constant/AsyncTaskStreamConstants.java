@@ -101,4 +101,31 @@ public final class AsyncTaskStreamConstants {
      * 面试会话ID字段
      */
     public static final String FIELD_SESSION_ID = "sessionId";
+
+    // ========== 技艺数字化档案（视频解析）Stream 配置 ==========
+
+    /**
+     * 视频解析 Stream Key
+     */
+    public static final String ARCHIVE_VIDEO_STREAM_KEY = "archive:video:stream";
+
+    /**
+     * 视频解析 Consumer Group 名称
+     */
+    public static final String ARCHIVE_VIDEO_GROUP_NAME = "archive-video-group";
+
+    /**
+     * 视频解析 Consumer 名称前缀
+     */
+    public static final String ARCHIVE_VIDEO_CONSUMER_PREFIX = "archive-video-consumer-";
+
+    /**
+     * 视频记录ID字段
+     */
+    public static final String FIELD_VIDEO_ID = "videoId";
+
+    /**
+     * 视频文件在 MinIO 的存储键
+     */
+    public static final String FIELD_VIDEO_KEY = "videoKey";
 }
