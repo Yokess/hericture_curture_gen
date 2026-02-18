@@ -47,6 +47,28 @@
             border-radius: 8px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
+        .image-caption {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #666;
+        }
+        .poster-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .poster-td {
+            width: 100%;
+            text-align: center;
+            vertical-align: top;
+            padding: 10px 0;
+        }
+        .poster-img {
+            width: 100%;
+            max-width: 165mm;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
         .section {
             margin: 25px 0;
             padding: 20px;
@@ -222,8 +244,42 @@
         </div>
 
         <!-- 产品图片 -->
-        <div class="product-image" th:if="${entity.productShotUrl != null and !entity.productShotUrl.isBlank()}">
-            <img th:src="${entity.productShotUrl}" alt="产品效果图" />
+        <div class="product-image" th:if="${productShotSrc != null and !productShotSrc.isBlank()}">
+            <img th:src="${productShotSrc}" alt="产品效果图" />
+            <div class="image-caption">产品效果图（实物定妆）</div>
+        </div>
+
+        <!-- 概念草图 -->
+        <div class="product-image" th:if="${blueprintSrc != null and !blueprintSrc.isBlank()}">
+            <img th:src="${blueprintSrc}" alt="概念草图" />
+            <div class="image-caption">概念草图（Blueprint）</div>
+        </div>
+
+        <!-- 商业海报（KV / 场景 / 细节） -->
+        <div class="section" th:if="${kvSrc != null or lifestyleSrc != null or detailSrc != null}">
+            <div class="section-title"><span>◆</span>商业视觉海报</div>
+            <div class="section-content">
+                <table class="poster-table">
+                    <tr th:if="${kvSrc != null}">
+                        <td class="poster-td">
+                            <img class="poster-img" th:src="${kvSrc}" alt="商业KV海报" />
+                            <div class="image-caption">海报01 - 主KV视觉（Key Visual）</div>
+                        </td>
+                    </tr>
+                    <tr th:if="${lifestyleSrc != null}">
+                        <td class="poster-td">
+                            <img class="poster-img" th:src="${lifestyleSrc}" alt="场景应用海报" />
+                            <div class="image-caption">海报02 - 生活场景/使用场景（Lifestyle）</div>
+                        </td>
+                    </tr>
+                    <tr th:if="${detailSrc != null}">
+                        <td class="poster-td">
+                            <img class="poster-img" th:src="${detailSrc}" alt="工艺细节海报" />
+                            <div class="image-caption">海报03 - 工艺/技术/概念可视化（Craft Detail）</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <!-- 设计理念 -->

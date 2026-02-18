@@ -10,6 +10,7 @@ import com.itextpdf.io.font.FontProgramFactory;
 import com.itextpdf.layout.font.FontProvider;
 import heritage.gen.common.exception.BusinessException;
 import heritage.gen.common.exception.ErrorCode;
+import heritage.gen.infrastructure.file.FileStorageService;
 import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignConcept;
 import lombok.Data;
@@ -20,6 +21,8 @@ import org.thymeleaf.context.Context;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.URLConnection;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,10 +36,12 @@ public class PdfExportService {
 
     private final TemplateEngine templateEngine;
     private final ObjectMapper objectMapper;
+    private final FileStorageService fileStorageService;
 
-    public PdfExportService(TemplateEngine templateEngine, ObjectMapper objectMapper) {
+    public PdfExportService(TemplateEngine templateEngine, ObjectMapper objectMapper, FileStorageService fileStorageService) {
         this.templateEngine = templateEngine;
         this.objectMapper = objectMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     public byte[] generateDesignPdf(ArtifactEntity entity) {
@@ -78,6 +83,12 @@ public class PdfExportService {
     }
 
     private void prepareContextData(Context context, ArtifactEntity entity) {
+        context.setVariable("blueprintSrc", toPdfImageSrc(entity.getBlueprintUrl()));
+        context.setVariable("productShotSrc", toPdfImageSrc(entity.getProductShotUrl()));
+        context.setVariable("kvSrc", toPdfImageSrc(entity.getKvUrl()));
+        context.setVariable("lifestyleSrc", toPdfImageSrc(entity.getLifestyleUrl()));
+        context.setVariable("detailSrc", toPdfImageSrc(entity.getDetailUrl()));
+
         if (entity.getConceptData() != null) {
             Object materials = entity.getConceptData().get("materials");
             List<DesignConcept.Material> materialsList = convertList(materials, new TypeReference<List<DesignConcept.Material>>() {});
@@ -165,5 +176,31 @@ public class PdfExportService {
 
     private String nullToEmpty(String v) {
         return v == null ? "" : v;
+    }
+
+    private String toPdfImageSrc(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        if (!fileStorageService.isStoredObjectUrl(url)) {
+            return url;
+        }
+        try {
+            URLConnection conn = java.net.URI.create(url).toURL().openConnection();
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(15000);
+            String contentType = conn.getContentType();
+            if (contentType == null || contentType.isBlank()) {
+                contentType = "image/png";
+            }
+            byte[] bytes;
+            try (InputStream in = conn.getInputStream()) {
+                bytes = in.readAllBytes();
+            }
+            String base64 = Base64.getEncoder().encodeToString(bytes);
+            return "data:" + contentType + ";base64," + base64;
+        } catch (Exception e) {
+            return url;
+        }
     }
 }
