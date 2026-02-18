@@ -105,7 +105,7 @@ export default function CommunityPostDetail() {
             {/* 左侧主要内容区 (占 8 列) */}
             <div className="lg:col-span-8 space-y-10">
                 {/* 1. 画廊组件 */}
-                <PostGallery artifact={post.artifact} title={post.title} />
+                <PostGallery artifact={post.artifact ?? null} title={post.title} />
 
                 {/* 2. 内容详情组件 */}
                 <PostContent 

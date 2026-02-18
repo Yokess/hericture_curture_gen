@@ -14,6 +14,7 @@ import UserManagement from './pages/admin/UserManagement';
 import KnowledgeBase from './pages/admin/KnowledgeBase';
 import HeritageProjectManagement from './pages/admin/HeritageProjectManagement';
 import SuccessorManagement from './pages/admin/SuccessorManagement';
+import CommunityManagement from './pages/admin/CommunityManagement';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="heritage-projects" element={<HeritageProjectManagement />} />
           <Route path="successors" element={<SuccessorManagement />} />
           <Route path="knowledge-base" element={<KnowledgeBase />} />
+          <Route path="community" element={<CommunityManagement />} />
         </Route>
       </Routes>
     </div>

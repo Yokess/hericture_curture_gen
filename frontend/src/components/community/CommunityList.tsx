@@ -1,4 +1,4 @@
-import { Loader2, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WorkCard } from '@/components/community/WorkCard';
 import { type CommunityPostListItemDTO } from '@/api/community';

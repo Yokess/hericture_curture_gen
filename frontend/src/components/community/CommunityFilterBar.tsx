@@ -1,13 +1,6 @@
-import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface CommunityFilterBarProps {

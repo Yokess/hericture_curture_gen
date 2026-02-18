@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { 
     Maximize2, 
     X, 
     ChevronLeft, 
     ChevronRight, 
-    Download, 
-    Share2, 
-    ZoomIn,
+    Download,
     ImageIcon,
     Layers
 } from 'lucide-react';
@@ -19,8 +17,7 @@ import {
     TooltipProvider, 
     TooltipTrigger 
 } from '@/components/ui/tooltip';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 // --- 类型定义 ---
@@ -51,13 +48,11 @@ interface PostGalleryProps {
 const ProgressiveImage = ({ 
     src, 
     alt, 
-    className, 
-    aspectRatio = 1 
+    className
 }: { 
     src: string; 
     alt: string; 
     className?: string; 
-    aspectRatio?: number 
 }) => {
     const [isLoading, setIsLoading] = useState(true);
 
@@ -230,7 +225,7 @@ export function PostGallery({ artifact, title, className }: PostGalleryProps) {
                                 {images[currentIndex]?.label}
                             </h3>
                             <p className="text-xs text-white/50 font-mono uppercase tracking-wider">
-                                {images[currentIndex]?.description} • {currentIndex + 1} / {images.length}
+                                {title} • {images[currentIndex]?.description} • {currentIndex + 1} / {images.length}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">

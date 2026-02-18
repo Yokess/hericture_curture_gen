@@ -95,5 +95,11 @@ export const communityApi = {
   addComment: (id: number, data: { content: string; parentId?: number }) => {
     return axiosInstance.post<any, { data: CommunityCommentDTO }>(`/api/community/posts/${id}/comments`, data);
   },
-};
 
+  adminPinPost: (id: number, pinned: boolean) => {
+    return axiosInstance.post<any, { data: void }>(`/api/admin/community/posts/${id}/pin`, undefined, { params: { pinned } });
+  },
+  adminDeletePost: (id: number) => {
+    return axiosInstance.delete<any, { data: void }>(`/api/admin/community/posts/${id}`);
+  },
+};
