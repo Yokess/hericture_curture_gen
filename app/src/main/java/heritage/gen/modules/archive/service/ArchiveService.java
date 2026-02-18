@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -66,8 +68,16 @@ public class ArchiveService {
         entity.setAnalysisStatus("PENDING");
         entity = arcVideoRepository.save(entity);
 
-        // 3. 发送到 Redis Stream
-        archiveStreamProducer.sendVideoAnalyzeTask(entity.getId(), uploadResult.storageKey());
+        final Long videoId = entity.getId();
+        final String videoKey = uploadResult.storageKey();
+
+        // 3. 事务提交后再发送到 Redis Stream，避免消费者在事务未提交时查不到记录
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                archiveStreamProducer.sendVideoAnalyzeTask(videoId, videoKey);
+            }
+        });
 
         log.info("视频上传成功: videoId={}, userId={}", entity.getId(), userId);
         return new VideoUploadResponse(entity.getId());

@@ -78,7 +78,10 @@ dashscope:
 app:
   # 技艺数字化档案（F3）配置
   archive:
-    ffmpeg-path: ${FFMPEG_PATH:ffmpeg}  # FFmpeg 可执行路径，需提前安装
+    # FFmpeg 可执行路径。Windows 下 Java 可能读不到 PATH，请设置 FFMPEG_PATH 环境变量为完整路径
+    ffmpeg-path: ${FFMPEG_PATH:D:/ffmpeg/bin/ffmpeg.exe}
+    frame-interval-sec: 20   # 抽帧间隔秒数，20 秒一帧
+    max-frames: 20           # 最大工序帧数，超过则均匀采样
     vision-model: ${ARCHIVE_VISION_MODEL:qwen-vl-max}  # 工序识别视觉模型
 
   # 对象存储配置（MinIO/S3兼容）

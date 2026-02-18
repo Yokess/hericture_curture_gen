@@ -61,6 +61,7 @@ public class ArchiveVideoProcessor {
             if (frames.isEmpty()) {
                 throw new RuntimeException("未能提取到任何关键帧");
             }
+            log.info("开始工序识别: videoId={}, totalFrames={}", videoId, frames.size());
 
             // 3. 删除可能存在的旧工序记录
             arcProcessStepRepository.findByVideoIdOrderByStepOrder(videoId)
@@ -68,8 +69,10 @@ public class ArchiveVideoProcessor {
 
             // 4. 对每一帧调用 AI 识别，上传关键帧，写入工序表
             int order = 1;
+            int total = frames.size();
             for (VideoFrameExtractor.FrameInfo frame : frames) {
                 try {
+                    log.info("工序识别进行中: videoId={}, frame={}/{}", videoId, order, total);
                     var result = processStepRecognitionService.recognize(frame.path());
                     String keyframeKey = uploadKeyframe(frame.path(), videoId, order);
                     ArcProcessStepEntity step = new ArcProcessStepEntity();
@@ -81,6 +84,7 @@ public class ArchiveVideoProcessor {
                     step.setStartTimeMs(frame.estimatedTimeMs());
                     step.setEndTimeMs(frame.estimatedTimeMs() + 5000);
                     arcProcessStepRepository.save(step);
+                    log.info("工序识别完成: videoId={}, frame={}/{}", videoId, order, total);
                     order++;
                 } catch (Exception e) {
                     log.warn("处理第 {} 帧失败，跳过: {}", order, e.getMessage());
