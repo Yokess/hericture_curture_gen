@@ -29,6 +29,7 @@ export default function AIDesign() {
     const [blueprintImg, setBlueprintImg] = useState<string | null>(null);
     const [productImg, setProductImg] = useState<string | null>(null);
     const [selectedView, setSelectedView] = useState<number>(0);
+    const [images, setImages] = useState<{ blueprint?: string | null; render?: string | null; kv?: string | null; lifestyle?: string | null; detail?: string | null }>({});
 
     // --- 初始化 ---
     useEffect(() => {
@@ -109,6 +110,7 @@ const handleGenerateConcept = async () => {
             const url = typeof res.data === 'string' ? res.data : (res.data as any).data;
             
             setBlueprintImg(url);
+            setImages((prev) => ({ ...prev, blueprint: url }));
             setStep('blueprint');
             setSelectedView(0); // 自动切换到草图视图
         } catch (err) {
@@ -133,6 +135,7 @@ const handleGenerateConcept = async () => {
             const url = typeof res.data === 'string' ? res.data : (res.data as any).data;
 
             setProductImg(url);
+            setImages((prev) => ({ ...prev, render: url }));
             setStep('render');
             setSelectedView(1); // 自动切换到效果图视图
         } catch (err) {
@@ -151,6 +154,7 @@ const handleGenerateConcept = async () => {
         setProject(null);
         setBlueprintImg(null);
         setProductImg(null);
+        setImages({});
         setCurrentDesignId(null);
         setIsSaved(false);
         setChatHistory([]); // 清空历史，开始新会话
@@ -162,6 +166,13 @@ const handleGenerateConcept = async () => {
         setIdea(savedProject.designPhilosophy || '');
         setBlueprintImg(savedProject.blueprintUrl || null);
         setProductImg(savedProject.productShotUrl || null);
+        setImages({
+            blueprint: savedProject.blueprintUrl || null,
+            render: savedProject.productShotUrl || null,
+            kv: savedProject.kvUrl || null,
+            lifestyle: savedProject.lifestyleUrl || null,
+            detail: savedProject.detailUrl || null,
+        });
         
         if (savedProject.id) {
             setCurrentDesignId(parseInt(savedProject.id));
@@ -191,7 +202,10 @@ const handleGenerateConcept = async () => {
                 ...project,
                 id: currentDesignId ? currentDesignId.toString() : undefined,
                 blueprintUrl: blueprintImg || undefined,
-                productShotUrl: productImg || undefined
+                productShotUrl: productImg || undefined,
+                kvUrl: images.kv || undefined,
+                lifestyleUrl: images.lifestyle || undefined,
+                detailUrl: images.detail || undefined
             };
             
             // 使用 designApi.saveDesign
@@ -303,6 +317,38 @@ const handleGenerateConcept = async () => {
         }
     };
 
+    const handleGenerateKv = async () => {
+        if (!project) {
+            alert('请先生成设计方案');
+            return;
+        }
+        if (!currentDesignId) {
+            await handleSaveDesign();
+        }
+        if (!currentDesignId) {
+            alert('请先保存设计');
+            return;
+        }
+        setIsProcessing(true);
+        try {
+            const res = await designApi.generateKv(currentDesignId);
+            const kv = res.data;
+            setImages((prev) => ({
+                ...prev,
+                kv: kv.kvUrl,
+                lifestyle: kv.lifestyleUrl,
+                detail: kv.detailUrl,
+            }));
+            setSelectedView(2);
+            await loadUserDesigns();
+        } catch (err) {
+            console.error(err);
+            alert('生成KV失败，请重试');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#F5F5DC]">
             <Navbar />
@@ -347,6 +393,7 @@ const handleGenerateConcept = async () => {
                         {/* 右侧: 视觉展示与详情区 */}
                         <div className="lg:col-span-2 space-y-8">
                             <DesignPreviewCard 
+                                images={images}
                                 blueprintImg={blueprintImg}
                                 productImg={productImg}
                                 selectedView={selectedView}
@@ -356,6 +403,7 @@ const handleGenerateConcept = async () => {
                                 isSaved={isSaved}
                                 onSave={handleSaveDesign}
                                 onAnalyze={handleGenerateAnalysis}
+                                onGenerateKv={handleGenerateKv}
                                 onExport={handleExportPdf}
                                 onPublish={handlePublishDesign}
                             />

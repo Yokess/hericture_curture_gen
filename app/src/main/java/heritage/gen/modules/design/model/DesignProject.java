@@ -13,6 +13,9 @@ public class DesignProject {
     private DesignConcept concept;
     private String blueprintUrl;
     private String productShotUrl;
+    private String kvUrl;
+    private String lifestyleUrl;
+    private String detailUrl;
 
     private String conceptName;
     private String designPhilosophy;

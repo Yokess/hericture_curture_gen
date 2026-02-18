@@ -7,6 +7,7 @@ import heritage.gen.common.result.Result;
 import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignProject;
 import heritage.gen.modules.design.model.GenerateDesignRequest;
+import heritage.gen.modules.design.model.KvGenerationResult;
 import heritage.gen.modules.design.model.SaveDesignRequest;
 import heritage.gen.modules.design.service.AiDesignService;
 import heritage.gen.modules.design.service.ArtifactService;
@@ -189,5 +190,26 @@ public class DesignController {
         log.info("保存分析报告: id={}", id);
         ArtifactEntity entity = artifactService.saveAnalysis(id, userId, analysis);
         return Result.success(entity);
+    }
+
+    @PostMapping("/{id}/generate/kv")
+    public Result<KvGenerationResult> generateKv(@PathVariable Long id) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        ArtifactEntity entity = artifactService.getDesignForWrite(id, userId);
+        KvGenerationResult result = designService.generateKvAssets(entity);
+        Map<String, Object> kvImageUrls = new java.util.HashMap<>();
+        kvImageUrls.put("kv", result.getKvUrl());
+        kvImageUrls.put("lifestyle", result.getLifestyleUrl());
+        kvImageUrls.put("detail", result.getDetailUrl());
+        artifactService.saveKvAssets(
+                id,
+                userId,
+                result.getPromptText(),
+                result.getKvUrl(),
+                result.getLifestyleUrl(),
+                result.getDetailUrl(),
+                kvImageUrls
+        );
+        return Result.success(result);
     }
 }

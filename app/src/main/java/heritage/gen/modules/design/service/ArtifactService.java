@@ -110,6 +110,43 @@ public class ArtifactService {
         throw new BusinessException(ErrorCode.FORBIDDEN, "无权限访问该设计");
     }
 
+    public ArtifactEntity getDesignForWrite(Long id, Long userId) {
+        ArtifactEntity entity = artifactRepository.findByIdActive(id);
+        if (entity == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
+        }
+        if (userId != null && userId.equals(entity.getUserId())) {
+            return entity;
+        }
+        throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作");
+    }
+
+    @Transactional
+    public ArtifactEntity saveKvAssets(
+            Long id,
+            Long userId,
+            String kvPromptText,
+            String kvUrl,
+            String lifestyleUrl,
+            String detailUrl,
+            Map<String, Object> kvImageUrls
+    ) {
+        ArtifactEntity entity = getDesignForWrite(id, userId);
+        entity.setKvUrl(kvUrl);
+        entity.setLifestyleUrl(lifestyleUrl);
+        entity.setDetailUrl(detailUrl);
+        if (entity.getGenerationMetadata() == null) {
+            entity.setGenerationMetadata(new HashMap<>());
+        }
+        if (kvPromptText != null && !kvPromptText.isBlank()) {
+            entity.getGenerationMetadata().put("kvPromptText", kvPromptText);
+        }
+        if (kvImageUrls != null && !kvImageUrls.isEmpty()) {
+            entity.getGenerationMetadata().put("kvImageUrls", kvImageUrls);
+        }
+        return artifactRepository.save(entity);
+    }
+
     @Transactional
     public ArtifactEntity publishDesign(Long id, Long userId) {
         ArtifactEntity entity = artifactRepository.findByIdActive(id);
@@ -153,6 +190,9 @@ public class ArtifactService {
         project.setDesignPhilosophy(entity.getDesignConcept());
         project.setBlueprintUrl(entity.getBlueprintUrl());
         project.setProductShotUrl(entity.getProductShotUrl());
+        project.setKvUrl(entity.getKvUrl());
+        project.setLifestyleUrl(entity.getLifestyleUrl());
+        project.setDetailUrl(entity.getDetailUrl());
 
         // 从 conceptData 恢复字段
         if (entity.getConceptData() != null) {

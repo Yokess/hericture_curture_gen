@@ -21,4 +21,7 @@ export interface DesignProject {
     keyFeatures?: string[];
     blueprintUrl?: string;
     productShotUrl?: string;
+    kvUrl?: string;
+    lifestyleUrl?: string;
+    detailUrl?: string;
 }

@@ -2,9 +2,12 @@ package heritage.gen.modules.design.service;
 
 import heritage.gen.common.exception.BusinessException;
 import heritage.gen.common.exception.ErrorCode;
+import heritage.gen.modules.design.model.ArtifactEntity;
 import heritage.gen.modules.design.model.DesignConcept;
 import heritage.gen.modules.design.model.DesignProject;
 import heritage.gen.modules.design.model.GenerateDesignRequest;
+import heritage.gen.modules.design.model.KvGenerationResult;
+import heritage.gen.modules.design.model.KvPromptPack;
 import heritage.gen.modules.knowledgebase.service.KnowledgeBaseVectorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -48,13 +51,17 @@ public class AiDesignService {
     private final PromptTemplate riskSystemPrompt;
     private final PromptTemplate riskUserPrompt;
 
+    private final PromptTemplate kvSystemPrompt;
+
     private final heritage.gen.infrastructure.file.FileStorageService fileStorageService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public AiDesignService(
             ChatClient.Builder chatClientBuilder,
             KnowledgeBaseVectorService vectorService,
             DashScopeImageGenerator imageGenerator,
             heritage.gen.infrastructure.file.FileStorageService fileStorageService,
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper,
             @Value("classpath:prompts/design-concept-system.st") Resource systemPromptResource,
             @Value("classpath:prompts/design-concept-user.st") Resource userPromptResource,
             @Value("classpath:prompts/design-market-system.st") Resource marketSystemResource,
@@ -62,11 +69,13 @@ public class AiDesignService {
             @Value("classpath:prompts/design-technical-system.st") Resource technicalSystemResource,
             @Value("classpath:prompts/design-technical-user.st") Resource technicalUserResource,
             @Value("classpath:prompts/design-risk-system.st") Resource riskSystemResource,
-            @Value("classpath:prompts/design-risk-user.st") Resource riskUserResource) throws IOException {
+            @Value("classpath:prompts/design-risk-user.st") Resource riskUserResource,
+            @Value("classpath:prompts/design-KV-system.st") Resource kvSystemResource) throws IOException {
         this.chatClient = chatClientBuilder.build();
         this.vectorService = vectorService;
         this.imageGenerator = imageGenerator;
         this.fileStorageService = fileStorageService;
+        this.objectMapper = objectMapper;
         this.systemPromptTemplate = new PromptTemplate(systemPromptResource.getContentAsString(StandardCharsets.UTF_8));
         this.userPromptTemplate = new PromptTemplate(userPromptResource.getContentAsString(StandardCharsets.UTF_8));
         
@@ -76,6 +85,7 @@ public class AiDesignService {
         this.technicalUserPrompt = new PromptTemplate(technicalUserResource.getContentAsString(StandardCharsets.UTF_8));
         this.riskSystemPrompt = new PromptTemplate(riskSystemResource.getContentAsString(StandardCharsets.UTF_8));
         this.riskUserPrompt = new PromptTemplate(riskUserResource.getContentAsString(StandardCharsets.UTF_8));
+        this.kvSystemPrompt = new PromptTemplate(kvSystemResource.getContentAsString(StandardCharsets.UTF_8));
     }
 
     /**
@@ -457,5 +467,152 @@ public class AiDesignService {
             log.error("JSON解析失败: {}", jsonStr, e);
             return new HashMap<>();
         }
+    }
+
+    public KvGenerationResult generateKvAssets(ArtifactEntity entity) {
+        if (entity == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "设计不存在");
+        }
+        if (entity.getProductShotUrl() == null || entity.getProductShotUrl().isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "缺少产品参考图(productShotUrl)");
+        }
+
+        log.info("开始生成KV: designId={}, productShotUrlPresent={}", entity.getId(), true);
+
+        String refFileUrl = downloadMinioImageToTemp(entity.getProductShotUrl());
+        if (refFileUrl == null || refFileUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "参考图不合法或不可访问");
+        }
+
+        log.info("KV参考图准备完成: designId={}, refFileUrl={}", entity.getId(), refFileUrl);
+
+        log.info("开始生成KV提示词系统文本: designId={}", entity.getId());
+        String promptText = generateKvPromptText(entity);
+        log.info("KV提示词系统文本生成完成: designId={}, length={}", entity.getId(), promptText != null ? promptText.length() : 0);
+        if (promptText != null && !promptText.isBlank()) {
+            log.info("KV提示词系统文本内容 (designId={}):\n{}", entity.getId(), promptText);
+        }
+
+        log.info("开始生成KV结构化提示词包: designId={}", entity.getId());
+        KvPromptPack pack = generateKvPromptPack(entity);
+        log.info("KV结构化提示词包生成完成: designId={}", entity.getId());
+        log.info("KV结构化提示词包内容 (designId={}):\n[KV]\n{}\n\n[Lifestyle]\n{}\n\n[Detail]\n{}\n\n[Negative]\n{}",
+                entity.getId(),
+                pack.getKvPrompt(),
+                pack.getLifestylePrompt(),
+                pack.getDetailPrompt(),
+                pack.getNegativePrompt());
+
+        String negative = pack.getNegativePrompt() != null ? pack.getNegativePrompt() : "";
+        log.info("开始生成商业KV图片(wan2.6 img2img): designId={}", entity.getId());
+        String kvRaw = imageGenerator.generateImageWithWanxImg2Img(pack.getKvPrompt(), "864*1536", negative, refFileUrl);
+        log.info("商业KV图片生成完成: designId={}", entity.getId());
+
+        log.info("开始生成场景应用图片(wan2.6 img2img): designId={}", entity.getId());
+        String lifestyleRaw = imageGenerator.generateImageWithWanxImg2Img(pack.getLifestylePrompt(), "864*1536", negative, refFileUrl);
+        log.info("场景应用图片生成完成: designId={}", entity.getId());
+
+        log.info("开始生成工艺细节图片(wan2.6 img2img): designId={}", entity.getId());
+        String detailRaw = imageGenerator.generateImageWithWanxImg2Img(pack.getDetailPrompt(), "864*1536", negative, refFileUrl);
+        log.info("工艺细节图片生成完成: designId={}", entity.getId());
+
+        KvGenerationResult result = new KvGenerationResult();
+        result.setPromptText(promptText);
+        result.setKvUrl(getShortRefUrl(kvRaw));
+        result.setLifestyleUrl(getShortRefUrl(lifestyleRaw));
+        result.setDetailUrl(getShortRefUrl(detailRaw));
+        return result;
+    }
+
+    private String generateKvPromptText(ArtifactEntity entity) {
+        String userPrompt = buildKvUserPrompt(entity);
+        return chatClient.prompt()
+                .system(kvSystemPrompt.render())
+                .user(userPrompt)
+                .call()
+                .content();
+    }
+
+    private KvPromptPack generateKvPromptPack(ArtifactEntity entity) {
+        String userPrompt = buildKvJsonUserPrompt(entity);
+        String raw = chatClient.prompt()
+                .system(kvSystemPrompt.render())
+                .user(userPrompt)
+                .call()
+                .content();
+        String json = extractJson(raw);
+        try {
+            return objectMapper.readValue(json, KvPromptPack.class);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "KV提示词解析失败");
+        }
+    }
+
+    private String buildKvUserPrompt(ArtifactEntity entity) {
+        String conceptText = buildConceptSummary(entity);
+        return "产品参考图URL: " + entity.getProductShotUrl() + "\n\n" +
+                "设计概念信息:\n" + conceptText + "\n\n" +
+                "请严格按照系统要求输出完整提示词系统。";
+    }
+
+    private String buildKvJsonUserPrompt(ArtifactEntity entity) {
+        String conceptText = buildConceptSummary(entity);
+        return "产品参考图URL: " + entity.getProductShotUrl() + "\n\n" +
+                "设计概念信息:\n" + conceptText + "\n\n" +
+                "请在遵循系统规范的前提下，仅输出严格JSON（不要代码块，不要多余文字），结构如下：\n" +
+                "{\n" +
+                "  \"kvPrompt\": \"...\",\n" +
+                "  \"lifestylePrompt\": \"...\",\n" +
+                "  \"detailPrompt\": \"...\",\n" +
+                "  \"negativePrompt\": \"...\"\n" +
+                "}\n" +
+                "要求：三张海报均为9:16竖版；必须强调“严格还原参考图产品外观、包装设计、文字与LOGO位置”；KV/Lifestyle/Detail各自侧重点不同。";
+    }
+
+    private String buildConceptSummary(ArtifactEntity entity) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("designName=").append(nullToEmpty(entity.getDesignName())).append("\n");
+        sb.append("designConcept=").append(nullToEmpty(entity.getDesignConcept())).append("\n");
+        Map<String, Object> cd = entity.getConceptData();
+        if (cd != null) {
+            Object conceptName = cd.get("conceptName");
+            Object culturalContext = cd.get("culturalContext");
+            Object formFactor = cd.get("formFactor");
+            Object dimensions = cd.get("dimensions");
+            Object userInteraction = cd.get("userInteraction");
+            Object materials = cd.get("materials");
+            Object colors = cd.get("colors");
+            Object keyFeatures = cd.get("keyFeatures");
+            if (conceptName != null) sb.append("conceptName=").append(conceptName).append("\n");
+            if (culturalContext != null) sb.append("culturalContext=").append(culturalContext).append("\n");
+            if (formFactor != null) sb.append("formFactor=").append(formFactor).append("\n");
+            if (dimensions != null) sb.append("dimensions=").append(dimensions).append("\n");
+            if (userInteraction != null) sb.append("userInteraction=").append(userInteraction).append("\n");
+            if (materials != null) sb.append("materials=").append(materials).append("\n");
+            if (colors != null) sb.append("colors=").append(colors).append("\n");
+            if (keyFeatures != null) sb.append("keyFeatures=").append(keyFeatures).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String extractJson(String raw) {
+        if (raw == null) {
+            return "{}";
+        }
+        String s = raw.trim();
+        if (s.startsWith("```json")) {
+            s = s.substring(7);
+        }
+        if (s.startsWith("```")) {
+            s = s.substring(3);
+        }
+        if (s.endsWith("```")) {
+            s = s.substring(0, s.length() - 3);
+        }
+        return s.trim();
+    }
+
+    private String nullToEmpty(String v) {
+        return v == null ? "" : v;
     }
 }

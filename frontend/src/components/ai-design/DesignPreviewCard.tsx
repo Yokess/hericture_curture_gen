@@ -62,6 +62,7 @@ interface DesignPreviewCardProps {
     isSaved: boolean;
     onSave: () => void;
     onAnalyze: () => void;
+    onGenerateKv: () => void;
     onExport: () => void;
     onPublish: () => void;
 }
@@ -110,7 +111,7 @@ const VIEW_CONFIGS: ViewConfig[] = [
         description: '包含品牌视觉识别(VI)系统与营销文案的竖版海报。',
         emptyIcon: Sparkles,
         ratio: 'vertical',
-        resolution: '1080 x 1920'
+        resolution: '864 x 1536'
     },
     {
         id: 'lifestyle',
@@ -120,7 +121,7 @@ const VIEW_CONFIGS: ViewConfig[] = [
         description: '展示产品在真实生活环境中的使用状态与氛围感。',
         emptyIcon: ImageIcon,
         ratio: 'vertical',
-        resolution: '1080 x 1920'
+        resolution: '864 x 1536'
     },
     {
         id: 'detail',
@@ -130,7 +131,7 @@ const VIEW_CONFIGS: ViewConfig[] = [
         description: '针对材质纹理、接缝工艺与表面处理的微距特写。',
         emptyIcon: ScanLine,
         ratio: 'vertical',
-        resolution: '1080 x 1920'
+        resolution: '864 x 1536'
     }
 ];
 
@@ -220,6 +221,7 @@ export function DesignPreviewCard({
     isSaved,
     onSave,
     onAnalyze,
+    onGenerateKv,
     onExport,
     onPublish
 }: DesignPreviewCardProps) {
@@ -529,6 +531,9 @@ export function DesignPreviewCard({
                     </Button>
                     <Button variant="outline" size="sm" onClick={onAnalyze} disabled={isProcessing || !viewDataMap.render}>
                         <Sparkles className="w-4 h-4 mr-2" /> 商业分析
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={onGenerateKv} disabled={isProcessing || !isSaved || !viewDataMap.render}>
+                        <Sparkles className="w-4 h-4 mr-2" /> 生成 KV
                     </Button>
                     <Button variant="outline" size="sm" onClick={onExport} disabled={!isSaved}>
                         <Download className="w-4 h-4 mr-2" /> 导出 PDF

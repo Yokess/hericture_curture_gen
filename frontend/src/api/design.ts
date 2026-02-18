@@ -1,6 +1,13 @@
 import axiosInstance from '@/utils/request';
 import { DesignProject } from '@/types/design';
 
+export interface KvGenerationResult {
+    promptText: string;
+    kvUrl: string;
+    lifestyleUrl: string;
+    detailUrl: string;
+}
+
 export const designApi = {
     generateConcept: (data: { idea: string; useRag?: boolean; chatHistory?: Array<{ role: string; content: string }> }) => {
         return axiosInstance.post<any, { data: DesignProject }>('/api/design/generate/concept', data);
@@ -52,5 +59,13 @@ export const designApi = {
 
     saveAnalysis: (id: number, analysis: any) => {
         return axiosInstance.post<any, { data: any }>(`/api/design/${id}/analysis`, analysis);
+    },
+
+    generateKv: (id: number) => {
+        return axiosInstance.post<any, { data: KvGenerationResult }>(
+            `/api/design/${id}/generate/kv`,
+            undefined,
+            { timeout: 600000 }
+        );
     }
 };

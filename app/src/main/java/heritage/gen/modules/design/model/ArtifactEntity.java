@@ -37,6 +37,15 @@ public class ArtifactEntity {
     @Column(name = "product_shot_url")
     private String productShotUrl;
 
+    @Column(name = "kv_url")
+    private String kvUrl;
+
+    @Column(name = "lifestyle_url")
+    private String lifestyleUrl;
+
+    @Column(name = "detail_url")
+    private String detailUrl;
+
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "image_urls", columnDefinition = "TEXT[]")
     private String[] imageUrls;
