@@ -67,4 +67,17 @@ public class ArchiveController {
         List<VideoStatusResponse> list = archiveService.listByUser(userId);
         return Result.success(list);
     }
+    @PostMapping("/{videoId}/retry")
+    public Result<Void> retry(@PathVariable Long videoId) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        archiveService.retryAnalysis(videoId, userId);
+        return Result.success();
+    }
+
+    @DeleteMapping("/{videoId}")
+    public Result<Void> delete(@PathVariable Long videoId) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        archiveService.deleteVideo(videoId, userId);
+        return Result.success();
+    }
 }

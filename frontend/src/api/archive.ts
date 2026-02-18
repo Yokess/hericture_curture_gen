@@ -76,4 +76,20 @@ export const archiveApi = {
         );
         return response.data || [];
     },
+
+    // --- 新增接口 ---
+
+    /**
+     * 重试视频解析
+     */
+    retryAnalysis: async (videoId: number): Promise<void> => {
+        await request.post(`${BASE_URL}/video/${videoId}/retry`);
+    },
+
+    /**
+     * 删除视频档案
+     */
+    deleteVideo: async (videoId: number): Promise<void> => {
+        await request.delete(`${BASE_URL}/${videoId}`);
+    },
 };
