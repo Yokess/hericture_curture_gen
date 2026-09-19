@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 知识库向量存储服务
@@ -96,40 +99,70 @@ public class KnowledgeBaseVectorService {
         log.info("向量相似度搜索: query={}, kbIds={}, topK={}", query, knowledgeBaseIds, topK);
         
         try {
-            // 使用VectorStore的similaritySearch方法（只接受查询字符串）
-            List<Document> allResults = vectorStore.similaritySearch(query);
-            
-            // 如果指定了知识库ID，进行过滤
-            if (knowledgeBaseIds != null && !knowledgeBaseIds.isEmpty()) {
-                allResults = allResults.stream()
-                    .filter(doc -> {
-                        Object kbId = doc.getMetadata().get("kb_id");
-                        if (kbId == null) return false;
-                        // 支持 String 和 Long 两种格式（向后兼容）
-                        try {
-                            Long kbIdLong = kbId instanceof Long 
-                                ? (Long) kbId 
-                                : Long.parseLong(kbId.toString());
-                            return knowledgeBaseIds.contains(kbIdLong);
-                        } catch (NumberFormatException e) {
-                            return false;
-                        }
-                    })
-                    .collect(Collectors.toList());
-                log.debug("使用metadata过滤，找到 {} 个相关文档", allResults.size());
-            }
-            
-            // 限制返回数量
-            List<Document> results = allResults.stream()
-                .limit(topK)
-                .collect(Collectors.toList());
-            
-            log.info("搜索完成: 找到 {} 个相关文档", results.size());
+            // 1. 语义召回：pgvector 的余弦相似度检索。
+            List<Document> semanticCandidates = filterByKnowledgeBase(
+                    vectorStore.similaritySearch(query), knowledgeBaseIds);
+
+            // 2. 词法召回：PostgreSQL full-text search。它独立于 embedding，因此可补足
+            // 专有名词、工艺术语和短查询的命中。
+            List<Document> keywordCandidates = vectorRepository.keywordSearch(query, 20).stream()
+                    .map(row -> new Document(row.get("content"), Map.of("kb_id", row.get("kb_id"))))
+                    .toList();
+            keywordCandidates = filterByKnowledgeBase(keywordCandidates, knowledgeBaseIds);
+
+            // 3. RRF 融合重排：避免任一检索通道单独主导最终上下文。
+            List<Document> results = reciprocalRankFuse(semanticCandidates, keywordCandidates, topK);
+
+            log.info("Hybrid RAG 搜索完成: semanticCandidates={}, keywordCandidates={}, results={}",
+                    semanticCandidates.size(), keywordCandidates.size(), results.size());
             return results;
             
         } catch (Exception e) {
             log.error("向量搜索失败: {}", e.getMessage(), e);
             throw new RuntimeException("向量搜索失败: " + e.getMessage(), e);
+        }
+    }
+
+    private List<Document> filterByKnowledgeBase(List<Document> documents, List<Long> knowledgeBaseIds) {
+        if (knowledgeBaseIds == null || knowledgeBaseIds.isEmpty()) {
+            return documents;
+        }
+        return documents.stream()
+                .filter(doc -> {
+                    Object kbId = doc.getMetadata().get("kb_id");
+                    if (kbId == null) return false;
+                    try {
+                        return knowledgeBaseIds.contains(Long.parseLong(kbId.toString()));
+                    } catch (NumberFormatException ignored) {
+                        return false;
+                    }
+                })
+                .toList();
+    }
+
+    /** Reciprocal Rank Fusion (RRF) reranker for semantic and keyword candidates. */
+    private List<Document> reciprocalRankFuse(List<Document> semantic, List<Document> keyword, int topK) {
+        final int rrfK = 60;
+        Map<String, Document> documents = new LinkedHashMap<>();
+        Map<String, Double> scores = new HashMap<>();
+        addRrfScores(semantic, documents, scores, rrfK);
+        addRrfScores(keyword, documents, scores, rrfK);
+
+        return documents.entrySet().stream()
+                .sorted(Comparator.comparingDouble((Map.Entry<String, Document> entry) ->
+                        scores.get(entry.getKey())).reversed())
+                .limit(topK)
+                .map(Map.Entry::getValue)
+                .toList();
+    }
+
+    private void addRrfScores(List<Document> rankedDocuments, Map<String, Document> documents,
+                              Map<String, Double> scores, int rrfK) {
+        for (int rank = 0; rank < rankedDocuments.size(); rank++) {
+            Document document = rankedDocuments.get(rank);
+            String key = document.getMetadata().getOrDefault("kb_id", "") + "\n" + document.getText();
+            documents.putIfAbsent(key, document);
+            scores.merge(key, 1.0 / (rrfK + rank + 1), Double::sum);
         }
     }
     
@@ -145,10 +178,8 @@ public class KnowledgeBaseVectorService {
             vectorRepository.deleteByKnowledgeBaseId(knowledgeBaseId);
         } catch (Exception e) {
             log.error("删除向量数据失败: kbId={}, error={}", knowledgeBaseId, e.getMessage(), e);
-            // 不抛出异常，允许继续执行其他删除操作
-            // 如果确实需要严格保证，可以取消下面的注释
-            // throw new RuntimeException("删除向量数据失败: " + e.getMessage(), e);
+            // 删除失败时禁止继续追加新向量，否则重试会产生重复数据。
+            throw new RuntimeException("删除旧向量数据失败: " + e.getMessage(), e);
         }
     }
 }
-

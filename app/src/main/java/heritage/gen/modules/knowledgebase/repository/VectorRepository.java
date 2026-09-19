@@ -6,6 +6,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 向量存储Repository
  * 负责向量数据的增删改查操作
@@ -60,5 +63,32 @@ public class VectorRepository {
             throw new RuntimeException("删除向量数据失败", e);
         }
     }    
+
+    /**
+     * 基于 PostgreSQL 全文索引语法执行词法召回。
+     *
+     * <p>向量库仍然是语义召回的来源；该查询提供独立的关键词候选集，随后由
+     * {@code KnowledgeBaseVectorService} 与语义候选集融合、重排。这里保留 kb_id
+     * 元数据，使服务层能执行与向量检索一致的知识库范围过滤。</p>
+     */
+    public List<Map<String, String>> keywordSearch(String query, int limit) {
+        String sql = """
+            SELECT content, metadata->>'kb_id' AS kb_id
+            FROM vector_store
+            WHERE to_tsvector('simple', COALESCE(content, ''))
+                    @@ websearch_to_tsquery('simple', ?)
+            ORDER BY ts_rank_cd(
+                    to_tsvector('simple', COALESCE(content, '')),
+                    websearch_to_tsquery('simple', ?)
+                ) DESC
+            LIMIT ?
+            """;
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> Map.of(
+                        "content", rs.getString("content"),
+                        "kb_id", rs.getString("kb_id") == null ? "" : rs.getString("kb_id")),
+                query, query, limit);
+    }
 }
 

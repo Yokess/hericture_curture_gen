@@ -198,21 +198,16 @@ public class KnowledgeBaseQueryService {
             String userPrompt = buildUserPrompt(context, question, knowledgeBaseIds);
 
 
-            // 5. 调用AI生成回答（注册工具）
-            // 注意：由于 Spring AI 2.0.0-M1 在 streaming 模式下处理 Qwen 模型的 tool calling 有 bug
-            // （toolName 在后续 chunk 中为空，导致 IllegalArgumentException），暂时使用非流式调用
+            // 5. 调用 AI 的原生 token 流。来源已在检索阶段确定，因此不在流式请求中注册工具，
+            // 避开模型工具调用与流式 chunk 的兼容性问题。
             log.info("开始调用AI生成回答: kbIds={}", knowledgeBaseIds);
 
-            String fullAnswer = chatClient.prompt()
+            return chatClient.prompt()
                     .system(systemPrompt)
                     .user(userPrompt)
-                    .tools(heritageDataTool)  // ✅ 传递工具实例
-                    .call()
-                    .content();
-            log.info("完成知识库回答: kbIds={}, answerLength={}", knowledgeBaseIds, fullAnswer.length());
-
-            // 将完整回答包装成 Flux 以兼容 SSE 接口
-            return Flux.just(fullAnswer);
+                    .stream()
+                    .content()
+                    .doOnComplete(() -> log.info("完成知识库流式回答: kbIds={}", knowledgeBaseIds));
 
         } catch (Exception e) {
             log.error("知识库流式问答失败: {}", e.getMessage(), e);
